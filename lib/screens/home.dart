@@ -25,22 +25,10 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.check_circle, size: 80, color: Colors.green),
-            SizedBox(height: 16),
-            Text(
-              "Login Successful 🎉",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              "Welcome to MyAseApp",
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
+      body: const Center(
+        child: Text(
+          "Login Successful 🎉",
+          style: TextStyle(fontSize: 22),
         ),
       ),
     );
