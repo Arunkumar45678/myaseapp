@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   static const String baseUrl = "https://diomisfrhfinohloejyx.supabase.co";
-  static const String anonKey = "sb_publishable_r1xOPpLNLfmmZH8L7TaRKQ_4dABy1c4";
+  static const String anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpb21pc2ZyaGZpbm9obG9lanl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MzQxNzMsImV4cCI6MjA4NTAxMDE3M30.y1cFnb0TSLdiaZAAiOMJgmoLXgj4WSMvP5vO7SIZiOE";
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
     final res = await http.post(
