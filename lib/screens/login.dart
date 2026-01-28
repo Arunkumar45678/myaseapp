@@ -67,6 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
         showMsg(res["message"] ?? "Login failed");
       }
     } catch (e) {
+      debugPrint("LOGIN ERROR: $e");
       showMsg("Server error");
     }
 
