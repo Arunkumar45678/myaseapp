@@ -90,7 +90,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
 
-                /// 🔷 LOGO
                 Image.asset(
                   "assets/images/logo.png",
                   height: 90,
@@ -115,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 32),
 
-                /// 🔷 CARD
                 Card(
                   elevation: 6,
                   shape: RoundedRectangleBorder(
@@ -173,31 +171,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 48,
                           child: ElevatedButton(
                             onPressed: loading ? null : login,
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
                             child: loading
                                 ? const CircularProgressIndicator(
                                     color: Colors.white,
                                   )
-                                : const Text(
-                                    "LOGIN",
-                                    style: TextStyle(fontSize: 16),
-                                  ),
+                                : const Text("LOGIN"),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 24),
-
-                const Text(
-                  "© 2026 MyAseApp",
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
             ),
