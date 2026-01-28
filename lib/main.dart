@@ -1,24 +1,28 @@
 import 'package:flutter/material.dart';
-import 'screens/login.dart';
-import 'screens/home.dart';
-import 'services/session_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+import 'screens/login.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final user = await SessionService.getUser();
-  runApp(MyApp(isLoggedIn: user != null));
+
+  await Supabase.initialize(
+    url: 'https://diomisfrhfineoloejyx.supabase.co',
+    anonKey: 'sb_publishable_r1xOPpLNxxxxZH8L7TaRKQ_4dABy1c4',
+  );
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  MyApp({required this.isLoggedIn});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MyAseApp',
       debugShowCheckedModeBanner: false,
-      home: isLoggedIn ? HomeScreen() : LoginScreen(),
+      home: const LoginScreen(),
     );
   }
 }
