@@ -1,6 +1,6 @@
 name: myaseapp
 description: A secure Flutter login app using Supabase backend
-publish_to: 'none' # Prevents publishing to pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -11,16 +11,16 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # 🔗 API calls
+  # 🔗 Supabase backend
   supabase_flutter: ^2.5.0
 
-  # 🔐 Secure local storage (session)
+  # 🔐 Secure local storage
   flutter_secure_storage: ^9.0.0
 
-  # 🌐 Internet connectivity check
+  # 🌐 Connectivity check
   connectivity_plus: ^6.0.3
+
   http: ^1.2.0
-  # 🎨 Icons
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
@@ -29,10 +29,35 @@ dev_dependencies:
 
   flutter_lints: ^3.0.1
 
+  # 🎨 App icon
+  flutter_launcher_icons: ^0.13.1
+
+  # 🌸 Splash screen
+  flutter_native_splash: ^2.4.0
+
 flutter:
   uses-material-design: true
 
-  # 📦 Assets
   assets:
     - assets/images/logo.png
-    
+
+
+# -----------------------------
+# App icon configuration
+# -----------------------------
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo.png"
+
+
+# -----------------------------
+# Splash screen configuration
+# -----------------------------
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/logo.png
+  android: true
+  ios: false
+  android_gravity: center
+

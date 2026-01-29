@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
 import '../services/auth_service.dart';
 import '../services/captcha_service.dart';
 import 'home.dart';
+import 'offline.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,6 +30,18 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     FocusScope.of(context).unfocus();
 
+    // 🌐 Check internet first
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const OfflineScreen()),
+      );
+      return;
+    }
+
+    // 🧾 Validation
     if (usernameCtrl.text.isEmpty) {
       showMsg("Enter username");
       return;
@@ -75,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
+      backgroundColor: const Color(0xFF121212),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -90,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
 
-                  /// LOGO INSIDE CARD
+                  /// 🌸 LOGO
                   Image.asset(
                     "assets/images/logo.png",
                     height: 80,
@@ -112,7 +127,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: usernameCtrl,
                     decoration: const InputDecoration(
                       labelText: "Username",
-                      border: OutlineInputBorder(),
                     ),
                   ),
 
@@ -123,7 +137,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: const InputDecoration(
                       labelText: "Password",
-                      border: OutlineInputBorder(),
                     ),
                   ),
 
@@ -141,7 +154,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       hintText: "Enter answer",
-                      border: OutlineInputBorder(),
                     ),
                   ),
 
