@@ -7,7 +7,11 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Dashboard")),
+      appBar: AppBar(
+        title: const Text("Dashboard"),
+        backgroundColor: const Color(0xFF1C1C1C),
+        foregroundColor: Colors.white,
+      ),
 
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -19,11 +23,22 @@ class DashboardScreen extends StatelessWidget {
             return DashboardCard(
               icon: Icons.widgets,
               title: "Card ${i + 1}",
-              subtitle: "Sample data",
+              subtitle: "Sample",
               onTap: () {},
             );
           }),
         ),
+      ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: const Color(0xFF1C1C1C),
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white54,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: "Info"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
       ),
     );
   }
