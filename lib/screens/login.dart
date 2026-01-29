@@ -90,116 +90,83 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEDEDED),
       body: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white, // white card
+          padding: const EdgeInsets.all(20),
+          child: Card(
+            elevation: 8,
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  blurRadius: 20,
-                  color: Colors.black12,
-                ),
-              ],
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
 
-                // LOGO
-                Image.asset(
-                  "assets/images/logo.png",
-                  height: 120,
-                ),
+                  // Logo
+                  Image.asset(
+                    "assets/images/logo.png",
+                    height: 110,
+                  ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                // USERNAME
-                TextField(
-                  controller: usernameCtrl,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    labelText: "Username",
-                    labelStyle: const TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
+                  TextField(
+                    controller: usernameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: "Username",
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 14),
+                  const SizedBox(height: 16),
 
-                // PASSWORD
-                TextField(
-                  controller: passwordCtrl,
-                  obscureText: true,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    labelStyle: const TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: "Password",
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                // CAPTCHA TEXT
-                Text(
-                  "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // CAPTCHA FIELD
-                TextField(
-                  controller: captchaCtrl,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.black),
-                  decoration: InputDecoration(
-                    labelText: "Captcha answer",
-                    labelStyle: const TextStyle(color: Colors.black),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
+                  Text(
+                    "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 8),
 
-                // LOGIN BUTTON
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB53045),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
+                  TextField(
+                    controller: captchaCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Captcha",
                     ),
-                    onPressed: loading ? null : login,
-                    child: loading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text(
-                            "LOGIN",
-                            style: TextStyle(fontSize: 18),
-                          ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(height: 28),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: loading ? null : login,
+                      child: loading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              "LOGIN",
+                              style: TextStyle(fontSize: 18),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
