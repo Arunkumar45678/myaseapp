@@ -23,30 +23,40 @@ class MyAseApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'MyAseApp',
 
-      themeMode: ThemeMode.dark,
+      theme: ThemeData(
+  useMaterial3: true,
+  brightness: Brightness.light,
 
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF146FC9),
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: const Color(0xFF146FC9),
+  ),
 
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF146FC9),
-          secondary: Color(0xFF146FC9),
-        ),
+  scaffoldBackgroundColor: const Color(0xFFF5F6FA),
 
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF146FC9),
-            foregroundColor: Colors.white,
-          ),
-        ),
-
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
+  inputDecorationTheme: InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: 20,
+      vertical: 16,
+    ),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Colors.black26),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(color: Colors.black26),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(
+        color: Color(0xFF146FC9),
+        width: 2,
       ),
-
+    ),
+  ),
+),
       home: const LoginScreen(),
     );
   }
