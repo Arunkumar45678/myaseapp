@@ -30,7 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     FocusScope.of(context).unfocus();
 
-    // 🌐 Check internet first
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity == ConnectivityResult.none) {
       if (!mounted) return;
@@ -41,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    // 🧾 Validation
     if (usernameCtrl.text.isEmpty) {
       showMsg("Enter username");
       return;
@@ -82,101 +80,5 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = false);
   }
 
-  void showMsg(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-
-                  /// 🌸 LOGO
-                  Image.asset(
-                    "assets/images/logo.png",
-                    height: 80,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  const Text(
-                    "MyAseApp Login",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  TextField(
-                    controller: usernameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: "Username",
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: passwordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  Text(
-                    "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  TextField(
-                    controller: captchaCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: "Enter answer",
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: loading ? null : login,
-                      child: loading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text("LOGIN"),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+  
