@@ -73,12 +73,151 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         showMsg(res['message'] ?? "Login failed");
       }
-    } catch (e) {
+    } catch (_) {
       showMsg("Server error");
     }
 
-    setState(() => loading = false);
+    if (mounted) {
+      setState(() => loading = false);
+    }
   }
 
+  void showMsg(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
 
-  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFEDEDED),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 20,
+                  color: Colors.black12,
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+
+                // Logo
+                Image.asset(
+                  "assets/images/logo.png",
+                  height: 140,
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  "ASE",
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+
+                const Text(
+                  "Sample Text",
+                  style: TextStyle(fontSize: 18),
+                ),
+
+                const SizedBox(height: 20),
+
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Please enter User Name"),
+                ),
+
+                const SizedBox(height: 6),
+
+                TextField(
+                  controller: usernameCtrl,
+                  decoration: InputDecoration(
+                    hintText: "Enter your User Name",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Please enter Password"),
+                ),
+
+                const SizedBox(height: 6),
+
+                TextField(
+                  controller: passwordCtrl,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: "********",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 14),
+
+                Text(
+                  "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
+                ),
+
+                const SizedBox(height: 6),
+
+                TextField(
+                  controller: captchaCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: "Captcha answer",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB53045),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    onPressed: loading ? null : login,
+                    child: loading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text(
+                            "LOGIN",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
