@@ -1,18 +1,35 @@
 import 'dart:math';
 
 class CaptchaService {
-  late int a, b, answer;
-  late String operator;
+  int a = 0;
+  int b = 0;
+  String operator = '+';
+  int answer = 0;
+
+  final _rand = Random();
 
   void generate() {
-    final r = Random();
-    a = r.nextInt(9) + 1;
-    b = r.nextInt(9) + 1;
-    operator = r.nextBool() ? "+" : "-";
-    answer = operator == "+" ? a + b : a - b;
+    a = _rand.nextInt(9) + 1;
+    b = _rand.nextInt(9) + 1;
+
+    // randomly choose + or -
+    if (_rand.nextBool()) {
+      operator = '+';
+      answer = a + b;
+    } else {
+      // ensure no negative results
+      if (a < b) {
+        final temp = a;
+        a = b;
+        b = temp;
+      }
+      operator = '-';
+      answer = a - b;
+    }
   }
 
   bool validate(String input) {
     return int.tryParse(input) == answer;
   }
 }
+
