@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white, // white card
               borderRadius: BorderRadius.circular(24),
               boxShadow: const [
                 BoxShadow(
@@ -110,41 +110,21 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
 
-                // Logo
+                // LOGO
                 Image.asset(
                   "assets/images/logo.png",
-                  height: 140,
-                ),
-
-                const SizedBox(height: 8),
-
-                const Text(
-                  "ASE",
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                ),
-
-                const Text(
-                  "Sample Text",
-                  style: TextStyle(fontSize: 18),
+                  height: 120,
                 ),
 
                 const SizedBox(height: 20),
 
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text("Please enter User Name"),
-                ),
-
-                const SizedBox(height: 6),
-
+                // USERNAME
                 TextField(
                   controller: usernameCtrl,
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    hintText: "Enter your User Name",
+                    labelText: "Username",
+                    labelStyle: const TextStyle(color: Colors.black),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -153,37 +133,42 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 14),
 
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text("Please enter Password"),
-                ),
-
-                const SizedBox(height: 6),
-
+                // PASSWORD
                 TextField(
                   controller: passwordCtrl,
                   obscureText: true,
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    hintText: "********",
+                    labelText: "Password",
+                    labelStyle: const TextStyle(color: Colors.black),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
+                // CAPTCHA TEXT
                 Text(
                   "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
 
+                // CAPTCHA FIELD
                 TextField(
                   controller: captchaCtrl,
                   keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
-                    hintText: "Captcha answer",
+                    labelText: "Captcha answer",
+                    labelStyle: const TextStyle(color: Colors.black),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -192,6 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 24),
 
+                // LOGIN BUTTON
                 SizedBox(
                   width: double.infinity,
                   height: 52,
