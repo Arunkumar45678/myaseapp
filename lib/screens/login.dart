@@ -66,9 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         showMsg(res["message"] ?? "Login failed");
       }
-    } catch (e) {
-      debugPrint("LOGIN ERROR: $e");
-      showMsg("Server error");
+    } catch (e, stack) {
+  debugPrint("🔥 LOGIN ERROR: $e");
+  debugPrint("🔥 STACK TRACE: $stack");
+  showMsg(e.toString());
     }
 
     setState(() => loading = false);
