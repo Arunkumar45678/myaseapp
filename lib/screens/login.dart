@@ -55,9 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
         passwordCtrl.text.trim(),
       );
 
-    if (res['status'] == true) {
-      final id = res['user_id']?.toString() ?? "user";
-      await SessionService.saveUser(id);
+      if (res['status'] == true) {
+        await SessionService.saveUser(res['user_id']);
 
         Navigator.pushReplacement(
           context,
@@ -66,8 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         showMsg(res['message'] ?? "Login failed");
       }
-    } catch (e) {
-      showMsg(e.toString());
+    } catch (_) {
+      showMsg("Server error");
     }
 
     setState(() => loading = false);
