@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/login.dart';
+import 'screens/home.dart';
+import 'services/session_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Supabase.initialize(
     url: 'https://diomisfrhfinohloejyx.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpb21pc2ZyaGZpbm9obG9lanl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0MzQxNzMsImV4cCI6MjA4NTAxMDE3M30.y1cFnb0TSLdiaZAAiOMJgmoLXgj4WSMvP5vO7SIZiOE',
+    anonKey: 'PASTE_YOUR_ANON_KEY',
   );
 
   runApp(const MyAseApp());
@@ -21,60 +23,37 @@ class MyAseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'MyAseApp',
-
-      theme: ThemeData(
-  useMaterial3: true,
-  brightness: Brightness.light,
-
-  scaffoldBackgroundColor: const Color(0xFFF5F7FA),
-
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: const Color(0xFF146FC9),
-  ),
-
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Color(0xFF0A1F44),
-    foregroundColor: Colors.white,
-    elevation: 0,
-  ),
-
-  inputDecorationTheme: InputDecorationTheme(
-    filled: true,
-    fillColor: Colors.white,
-    contentPadding: const EdgeInsets.symmetric(
-      horizontal: 20,
-      vertical: 16,
-    ),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black12),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black12),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(
-        color: Color(0xFF146FC9),
-        width: 2,
-      ),
-    ),
-  ),
-
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: const Color(0xFF146FC9),
-      foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-    ),
-  ),
-),
-      home: const LoginScreen(),
+      home: const SessionGate(),
     );
   }
 }
 
+class SessionGate extends StatefulWidget {
+  const SessionGate({super.key});
+
+  @override
+  State<SessionGate> createState() => _SessionGateState();
+}
+
+class _SessionGateState extends State<SessionGate> {
+  Widget screen = const Scaffold(
+    body: Center(child: CircularProgressIndicator()),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    checkSession();
+  }
+
+  Future<void> checkSession() async {
+    final user = await SessionService.getUser();
+
+    setState(() {
+      screen = user == null ? const LoginScreen() : const HomeScreen();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => screen;
+}
