@@ -84,11 +84,13 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
+             color: Colors.white,
+             surfaceTintColor: Colors.transparent,
+             elevation: 8,
+             shape: RoundedRectangleBorder(
+             borderRadius: BorderRadius.circular(24),
+             ),
+           child: Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
