@@ -55,8 +55,9 @@ class _LoginScreenState extends State<LoginScreen> {
         passwordCtrl.text.trim(),
       );
 
-      if (res['status'] == true) {
-        await SessionService.saveUser(res['user_id']);
+    if (res['status'] == true) {
+      final id = res['user_id']?.toString() ?? "user";
+      await SessionService.saveUser(id);
 
         Navigator.pushReplacement(
           context,
