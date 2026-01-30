@@ -24,7 +24,7 @@ class DashboardCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: const [
             BoxShadow(
-              blurRadius: 12,
+              blurRadius: 10,
               color: Colors.black12,
             ),
           ],
@@ -35,20 +35,12 @@ class DashboardCard extends StatelessWidget {
           children: [
             Icon(icon, size: 36, color: const Color(0xFF146FC9)),
             const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 18)),
             const SizedBox(height: 6),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
-            ),
+            Text(subtitle,
+                style: const TextStyle(color: Colors.grey)),
           ],
         ),
       ),
