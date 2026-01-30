@@ -27,11 +27,17 @@ class MyAseApp extends StatelessWidget {
   useMaterial3: true,
   brightness: Brightness.light,
 
+  scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+
   colorScheme: ColorScheme.fromSeed(
     seedColor: const Color(0xFF146FC9),
   ),
 
-  scaffoldBackgroundColor: const Color(0xFFF5F6FA),
+  appBarTheme: const AppBarTheme(
+    backgroundColor: Color(0xFF0A1F44),
+    foregroundColor: Colors.white,
+    elevation: 0,
+  ),
 
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
@@ -42,17 +48,27 @@ class MyAseApp extends StatelessWidget {
     ),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black26),
+      borderSide: const BorderSide(color: Colors.black12),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(color: Colors.black26),
+      borderSide: const BorderSide(color: Colors.black12),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
       borderSide: const BorderSide(
         color: Color(0xFF146FC9),
         width: 2,
+      ),
+    ),
+  ),
+
+  elevatedButtonTheme: ElevatedButtonThemeData(
+    style: ElevatedButton.styleFrom(
+      backgroundColor: const Color(0xFF146FC9),
+      foregroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
     ),
   ),
