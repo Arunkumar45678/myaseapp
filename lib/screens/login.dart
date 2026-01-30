@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../services/auth_service.dart';
 import '../services/captcha_service.dart';
+import '../services/session_service.dart';
 import 'home.dart';
 import 'offline.dart';
 
@@ -32,7 +33,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity == ConnectivityResult.none) {
-      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const OfflineScreen()),
@@ -40,19 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    if (usernameCtrl.text.isEmpty) {
-      showMsg("Enter username");
-      return;
-    }
-
-    if (passwordCtrl.text.isEmpty) {
-      showMsg("Enter password");
-      return;
-    }
-
-    if (!captcha.validate(captchaCtrl.text)) {
-      showMsg("Captcha incorrect");
-      setState(() => captcha.generate());
+    if (usernameCtrl.text.isEmpty ||
+        passwordCtrl.text.isEmpty ||
+        !captcha.validate(captchaCtrl.text)) {
+      showMsg("Invalid input or captcha");
       return;
     }
 
@@ -65,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (res['status'] == true) {
-        if (!mounted) return;
+        await SessionService.saveUser(res['user_id']);
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -77,9 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showMsg("Server error");
     }
 
-    if (mounted) {
-      setState(() => loading = false);
-    }
+    setState(() => loading = false);
   }
 
   void showMsg(String msg) {
@@ -94,7 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Card(
-            color: Colors.white,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
@@ -104,53 +93,33 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
-                  // Logo
-                  Image.asset(
-                    "assets/images/logo.png",
-                    height: 120,
-                  ),
-
+                  Image.asset("assets/images/logo.png", height: 110),
                   const SizedBox(height: 24),
-
                   TextField(
                     controller: usernameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: "Username",
-                    ),
+                    decoration:
+                        const InputDecoration(labelText: "Username"),
                   ),
-
                   const SizedBox(height: 16),
-
                   TextField(
                     controller: passwordCtrl,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                    ),
+                    decoration:
+                        const InputDecoration(labelText: "Password"),
                   ),
-
                   const SizedBox(height: 20),
-
                   Text(
                     "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-
                   const SizedBox(height: 8),
-
                   TextField(
                     controller: captchaCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Captcha",
-                    ),
+                    decoration:
+                        const InputDecoration(labelText: "Captcha"),
                   ),
-
                   const SizedBox(height: 28),
-
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -158,12 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: loading ? null : login,
                       child: loading
                           ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text(
-                              "LOGIN",
-                              style: TextStyle(fontSize: 18),
-                            ),
+                              color: Colors.white)
+                          : const Text("LOGIN"),
                     ),
                   ),
                 ],
