@@ -94,6 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Card(
+            color: Colors.white,
             elevation: 8,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
@@ -107,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Logo
                   Image.asset(
                     "assets/images/logo.png",
-                    height: 110,
+                    height: 120,
                   ),
 
                   const SizedBox(height: 24),
