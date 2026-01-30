@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final captcha = CaptchaService();
 
   bool loading = false;
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -84,85 +85,223 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void showMsg(String msg) {
     ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+        .showSnackBar(SnackBar(
+          content: Text(msg),
+          backgroundColor: const Color(0xFF4CAF50), // Light green
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE3F2FD), // Light blue background
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Card(
-            elevation: 8,
+            elevation: 16,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
             ),
+            color: Colors.white, // White card
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
 
-                  // Logo
-                  Image.asset(
-                    "assets/images/logo.png",
-                    height: 110,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  TextField(
-                    controller: usernameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: "Username",
+                  // Logo with light blue accent
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(50),
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  TextField(
-                    controller: passwordCtrl,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Text(
-                    "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  TextField(
-                    controller: captchaCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Captcha",
+                    child: Image.asset(
+                      "assets/images/logo.png",
+                      height: 90,
                     ),
                   ),
 
                   const SizedBox(height: 28),
 
+                  // Login Title
+                  const Text(
+                    "Welcome Back",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1C1C1C),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  const Text(
+                    "Sign in to continue",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Username Field
+                  TextField(
+                    controller: usernameCtrl,
+                    decoration: InputDecoration(
+                      labelText: "Username",
+                      prefixIcon: const Icon(Icons.person, color: Color(0xFF4CAF50)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFBBDEFB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 2),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Password Field
+                  TextField(
+                    controller: passwordCtrl,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Password",
+                      prefixIcon: const Icon(Icons.lock, color: Color(0xFF4CAF50)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          color: const Color(0xFF4CAF50),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFBBDEFB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 2),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Captcha Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          "Security Check",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blueGrey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Solve: ${captcha.a} ${captcha.operator} ${captcha.b} = ?",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: captchaCtrl,
+                          keyboardType: TextInputType.number,
+                          textAlign: TextAlign.center,
+                          decoration: InputDecoration(
+                            labelText: "Enter Result",
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Login Button with Light Green
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: loading ? null : login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4CAF50), // Light green
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 4,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                       child: loading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text(
                               "LOGIN",
-                              style: TextStyle(fontSize: 18),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2,
+                              ),
                             ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Forgot Password Link
+                  TextButton(
+                    onPressed: () {
+                      // Add forgot password functionality
+                    },
+                    child: const Text(
+                      "Forgot Password?",
+                      style: TextStyle(
+                        color: Color(0xFF4CAF50),
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ],
