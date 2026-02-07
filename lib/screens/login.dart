@@ -35,8 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
     b = r.nextInt(a);
   }
 
-  /* ================= GOOGLE LOGIN ================= */
-
+  /* ------------ GOOGLE LOGIN ------------ */
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
@@ -44,26 +43,23 @@ class _LoginScreenState extends State<LoginScreen> {
       final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
       if (googleUser == null) return;
 
-      final googleAuth = await googleUser.authentication;
+      final auth = await googleUser.authentication;
 
-      final res = await supabase.auth.signInWithIdToken(
+      await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
-        idToken: googleAuth.idToken!,
-        accessToken: googleAuth.accessToken,
+        idToken: auth.idToken!,
+        accessToken: auth.accessToken,
       );
 
-      if (res.user != null) {
-        await _postLoginRoute();
-      }
+      await _routeAfterLogin();
     } catch (e) {
-      _show(e.toString());
+      _show("Google login failed");
     } finally {
       setState(() => loading = false);
     }
   }
 
-  /* ================= MANUAL LOGIN ================= */
-
+  /* ------------ MANUAL LOGIN ------------ */
   Future<void> manualLogin() async {
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
@@ -75,17 +71,26 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
 
     try {
-      final res = await supabase.rpc('login_user', params: {
-        'login_input': loginCtrl.text.trim(),
-        'password_input': passwordCtrl.text.trim(),
-      });
+      final email = await supabase.rpc(
+        'login_user',
+        params: {
+          'login_input': loginCtrl.text.trim(),
+          'password_input': passwordCtrl.text.trim(),
+        },
+      );
 
-      if (res == null) {
+      if (email == null) {
         _show("Invalid credentials");
         return;
       }
 
-      await _postLoginRoute();
+      // Create Supabase session
+      await supabase.auth.signInWithPassword(
+        email: email,
+        password: passwordCtrl.text.trim(),
+      );
+
+      await _routeAfterLogin();
     } catch (e) {
       _show("Login failed");
     } finally {
@@ -93,29 +98,21 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /* ================= ROUTING ================= */
-
-  Future<void> _postLoginRoute() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
-
+  Future<void> _routeAfterLogin() async {
+    final user = supabase.auth.currentUser!;
     final profile = await supabase
         .from('user_profiles')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
 
-    if (profile == null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RegistrationScreen()),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            profile == null ? const RegistrationScreen() : const HomeScreen(),
+      ),
+    );
   }
 
   void _show(String msg) {
@@ -123,76 +120,71 @@ class _LoginScreenState extends State<LoginScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  /* ================= UI ================= */
+  InputDecoration _input(String label) => InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Card(
-          color: Colors.white,
-          elevation: 10,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          margin: const EdgeInsets.all(24),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset("assets/images/logo.png", height: 80),
+        child: SingleChildScrollView(
+          child: Card(
+            color: Colors.white,
+            elevation: 10,
+            margin: const EdgeInsets.all(24),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                Image.asset("assets/images/logo.png", height: 70),
                 const SizedBox(height: 16),
-
                 const Text("Welcome to ASE",
                     style:
                         TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
                   child: ElevatedButton(
                     onPressed: loading ? null : googleLogin,
                     child: const Text("Continue with Google"),
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 const Divider(),
                 const Text("OR login with Email / Phone"),
                 const Divider(),
 
-                const SizedBox(height: 12),
+                TextField(
+                    controller: loginCtrl,
+                    decoration: _input("Email or Mobile")),
+
+                const SizedBox(height: 10),
 
                 TextField(
-                  controller: loginCtrl,
-                  decoration:
-                      const InputDecoration(labelText: "Email or Mobile"),
-                ),
+                    controller: passwordCtrl,
+                    obscureText: true,
+                    decoration: _input("Password")),
 
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: passwordCtrl,
-                  obscureText: true,
-                  decoration:
-                      const InputDecoration(labelText: "Password"),
-                ),
-
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 Text("Solve: $a - $b = ?"),
                 TextField(
-                  controller: captchaCtrl,
-                  keyboardType: TextInputType.number,
-                ),
+                    controller: captchaCtrl,
+                    decoration: _input("Captcha"),
+                    keyboardType: TextInputType.number),
 
                 const SizedBox(height: 16),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 45,
                   child: ElevatedButton(
                     onPressed: loading ? null : manualLogin,
                     child: loading
@@ -200,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Text("LOGIN"),
                   ),
                 ),
-              ],
+              ]),
             ),
           ),
         ),
