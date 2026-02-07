@@ -22,6 +22,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final captchaCtrl = TextEditingController();
 
   String? gender;
+  String? district;
+  String? mandal;
+  String? village;
+
+  List<String> districts = [];
+  List<String> mandals = [];
+  List<String> villages = [];
+
   bool acceptTerms = false;
   bool loading = false;
 
@@ -30,19 +38,84 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   void initState() {
     super.initState();
+    _generateCaptcha();
+    _loadDistricts();
+  }
+
+  void _generateCaptcha() {
     final r = Random();
     a = r.nextInt(9) + 1;
     b = r.nextInt(a);
   }
 
+  InputDecoration _input(String label) => InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      );
+
+  /* =========================
+     LOAD DROPDOWNS
+     ========================= */
+
+  Future<void> _loadDistricts() async {
+    final res = await supabase
+        .from('villages')
+        .select('district')
+        .order('district');
+
+    districts =
+        res.map<String>((e) => e['district'] as String).toSet().toList();
+    setState(() {});
+  }
+
+  Future<void> _loadMandals(String d) async {
+    mandals.clear();
+    villages.clear();
+    mandal = null;
+    village = null;
+
+    final res = await supabase
+        .from('villages')
+        .select('mandal')
+        .eq('district', d);
+
+    mandals =
+        res.map<String>((e) => e['mandal'] as String).toSet().toList();
+    setState(() {});
+  }
+
+  Future<void> _loadVillages(String m) async {
+    villages.clear();
+    village = null;
+
+    final res = await supabase
+        .from('villages')
+        .select('village')
+        .eq('district', district!)
+        .eq('mandal', m);
+
+    villages = res.map<String>((e) => e['village'] as String).toList();
+    setState(() {});
+  }
+
+  /* =========================
+     SUBMIT
+     ========================= */
+
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!acceptTerms) {
-      _show("Accept terms & conditions");
+      _show("Accept Terms & Conditions");
       return;
     }
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
+      _generateCaptcha();
+      setState(() {});
       return;
     }
 
@@ -50,12 +123,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       final user = supabase.auth.currentUser!;
+
       await supabase.rpc('register_user', params: {
         'uid': user.id,
         'email': user.email,
         'name': nameCtrl.text.trim(),
         'gender': gender,
         'mobile': mobileCtrl.text.trim(),
+        'district': district,
+        'mandal': mandal,
+        'village': village,
         'password': passwordCtrl.text.trim(),
       });
 
@@ -85,85 +162,169 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         automaticallyImplyLeading: false,
       ),
       body: Center(
-        child: Card(
-          color: Colors.white,
-          elevation: 10,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          margin: const EdgeInsets.all(24),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text("Email: $email"),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Card(
+            color: Colors.white,
+            elevation: 10,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text("Email: $email"),
 
-                TextFormField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: "Full Name"),
-                  validator: (v) =>
-                      v!.isEmpty ? "Name required" : null,
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: nameCtrl,
+                      decoration: _input("Full Name"),
+                      validator: (v) =>
+                          v!.isEmpty ? "Name required" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: mobileCtrl,
+                      maxLength: 10,
+                      keyboardType: TextInputType.phone,
+                      decoration: _input("Mobile Number"),
+                      validator: (v) =>
+                          v!.length != 10 ? "Invalid mobile" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: passwordCtrl,
+                      obscureText: true,
+                      decoration: _input("Password"),
+                      validator: (v) =>
+                          v!.length < 6 ? "Min 6 characters" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile(
+                            title: const Text("Male"),
+                            value: "Male",
+                            groupValue: gender,
+                            onChanged: (v) =>
+                                setState(() => gender = v as String),
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile(
+                            title: const Text("Female"),
+                            value: "Female",
+                            groupValue: gender,
+                            onChanged: (v) =>
+                                setState(() => gender = v as String),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    DropdownButtonFormField(
+                      value: district,
+                      decoration: _input("District"),
+                      items: districts
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) {
+                        district = v;
+                        _loadMandals(v!);
+                      },
+                      validator: (v) =>
+                          v == null ? "Select district" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField(
+                      value: mandal,
+                      decoration: _input("Mandal"),
+                      items: mandals
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) {
+                        mandal = v;
+                        _loadVillages(v!);
+                      },
+                      validator: (v) =>
+                          v == null ? "Select mandal" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    DropdownButtonFormField(
+                      value: village,
+                      decoration: _input("Village"),
+                      items: villages
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (v) => village = v,
+                      validator: (v) =>
+                          v == null ? "Select village" : null,
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Text("Solve: $a - $b = ?"),
+                    TextFormField(
+                      controller: captchaCtrl,
+                      decoration: _input("Captcha"),
+                      keyboardType: TextInputType.number,
+                    ),
+
+                    CheckboxListTile(
+                      value: acceptTerms,
+                      onChanged: (v) =>
+                          setState(() => acceptTerms = v!),
+                      title: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => TermsScreen()),
+                          );
+                        },
+                        child: const Text(
+                          "Accept Terms & Conditions",
+                          style: TextStyle(
+                              decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: loading ? null : submit,
+                        child: loading
+                            ? const CircularProgressIndicator()
+                            : const Text("SUBMIT"),
+                      ),
+                    ),
+                  ],
                 ),
-
-                TextFormField(
-                  controller: mobileCtrl,
-                  maxLength: 10,
-                  keyboardType: TextInputType.phone,
-                  decoration:
-                      const InputDecoration(labelText: "Mobile"),
-                  validator: (v) =>
-                      v!.length != 10 ? "Invalid mobile" : null,
-                ),
-
-                TextFormField(
-                  controller: passwordCtrl,
-                  obscureText: true,
-                  decoration:
-                      const InputDecoration(labelText: "Password"),
-                  validator: (v) =>
-                      v!.length < 6 ? "Min 6 characters" : null,
-                ),
-
-                Row(children: [
-                  Radio(
-                      value: "Male",
-                      groupValue: gender,
-                      onChanged: (v) => setState(() => gender = v)),
-                  const Text("Male"),
-                  Radio(
-                      value: "Female",
-                      groupValue: gender,
-                      onChanged: (v) => setState(() => gender = v)),
-                  const Text("Female"),
-                ]),
-
-                Text("Solve: $a - $b = ?"),
-                TextField(controller: captchaCtrl),
-
-                CheckboxListTile(
-                  value: acceptTerms,
-                  onChanged: (v) => setState(() => acceptTerms = v!),
-                  title: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const TermsScreen()),
-                      );
-                    },
-                    child: const Text("Accept Terms & Conditions"),
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                ElevatedButton(
-                  onPressed: loading ? null : submit,
-                  child: loading
-                      ? const CircularProgressIndicator()
-                      : const Text("SUBMIT"),
-                ),
-              ]),
+              ),
             ),
           ),
         ),
