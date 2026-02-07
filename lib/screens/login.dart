@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,13 +14,29 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool loading = false;
-
   final supabase = Supabase.instance.client;
 
-  /* ============================
-     GOOGLE SIGN-IN
-     ============================ */
+  final loginCtrl = TextEditingController();
+  final passwordCtrl = TextEditingController();
+  final captchaCtrl = TextEditingController();
+
+  bool loading = false;
+  int a = 0, b = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _genCaptcha();
+  }
+
+  void _genCaptcha() {
+    final r = Random();
+    a = r.nextInt(9) + 1;
+    b = r.nextInt(a);
+  }
+
+  /* ================= GOOGLE LOGIN ================= */
+
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
@@ -29,27 +46,58 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final googleAuth = await googleUser.authentication;
 
-      final response = await supabase.auth.signInWithIdToken(
+      final res = await supabase.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: googleAuth.idToken!,
         accessToken: googleAuth.accessToken,
       );
 
-      if (response.user != null) {
-        await handlePostLogin();
+      if (res.user != null) {
+        await _postLoginRoute();
       }
     } catch (e) {
-      show(e.toString());
+      _show(e.toString());
     } finally {
       setState(() => loading = false);
     }
   }
 
-  /* ============================
-     POST LOGIN ROUTER (IMPORTANT)
-     ============================ */
-  Future<void> handlePostLogin() async {
-    final user = supabase.auth.currentUser!;
+  /* ================= MANUAL LOGIN ================= */
+
+  Future<void> manualLogin() async {
+    if (int.tryParse(captchaCtrl.text) != (a - b)) {
+      _show("Captcha incorrect");
+      _genCaptcha();
+      setState(() {});
+      return;
+    }
+
+    setState(() => loading = true);
+
+    try {
+      final res = await supabase.rpc('login_user', params: {
+        'login_input': loginCtrl.text.trim(),
+        'password_input': passwordCtrl.text.trim(),
+      });
+
+      if (res == null) {
+        _show("Invalid credentials");
+        return;
+      }
+
+      await _postLoginRoute();
+    } catch (e) {
+      _show("Login failed");
+    } finally {
+      setState(() => loading = false);
+    }
+  }
+
+  /* ================= ROUTING ================= */
+
+  Future<void> _postLoginRoute() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
 
     final profile = await supabase
         .from('user_profiles')
@@ -58,78 +106,98 @@ class _LoginScreenState extends State<LoginScreen> {
         .maybeSingle();
 
     if (profile == null) {
-      // FIRST TIME USER → REGISTRATION
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const RegistrationScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const RegistrationScreen()),
       );
     } else {
-      // ALREADY REGISTERED → DASHBOARD
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => const HomeScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     }
   }
 
-  void show(String msg) {
+  void _show(String msg) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  /* ============================
-     UI
-     ============================ */
+  /* ================= UI ================= */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Card(
+          color: Colors.white,
+          elevation: 10,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           margin: const EdgeInsets.all(24),
-          elevation: 8,
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  "assets/images/logo.png",
-                  height: 80,
-                ),
+                Image.asset("assets/images/logo.png", height: 80),
                 const SizedBox(height: 16),
 
-                const Text(
-                  "Welcome to ASE",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 6),
-
-                const Text(
-                  "Sign in to continue",
-                  textAlign: TextAlign.center,
-                ),
+                const Text("Welcome to ASE",
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
 
                 const SizedBox(height: 20),
 
                 SizedBox(
                   width: double.infinity,
                   height: 48,
-                  child: ElevatedButton.icon(
+                  child: ElevatedButton(
                     onPressed: loading ? null : googleLogin,
-                    icon: const Icon(Icons.login),
-                    label: loading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text("Continue with Google"),
+                    child: const Text("Continue with Google"),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                const Divider(),
+                const Text("OR login with Email / Phone"),
+                const Divider(),
+
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: loginCtrl,
+                  decoration:
+                      const InputDecoration(labelText: "Email or Mobile"),
+                ),
+
+                const SizedBox(height: 12),
+
+                TextField(
+                  controller: passwordCtrl,
+                  obscureText: true,
+                  decoration:
+                      const InputDecoration(labelText: "Password"),
+                ),
+
+                const SizedBox(height: 12),
+
+                Text("Solve: $a - $b = ?"),
+                TextField(
+                  controller: captchaCtrl,
+                  keyboardType: TextInputType.number,
+                ),
+
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: loading ? null : manualLogin,
+                    child: loading
+                        ? const CircularProgressIndicator()
+                        : const Text("LOGIN"),
                   ),
                 ),
               ],
