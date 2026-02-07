@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'screens/login.dart';
-import 'screens/home.dart';
-import 'services/session_service.dart';
+import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,37 +21,19 @@ class MyAseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const SessionGate(),
+      title: 'MyAseApp',
+      theme: ThemeData(
+        scaffoldBackgroundColor: const Color(0xFFF5F7FA),
+        primaryColor: const Color(0xFF146FC9),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+      home: const SplashScreen(),
     );
   }
-}
-
-class SessionGate extends StatefulWidget {
-  const SessionGate({super.key});
-
-  @override
-  State<SessionGate> createState() => _SessionGateState();
-}
-
-class _SessionGateState extends State<SessionGate> {
-  Widget screen = const Scaffold(
-    body: Center(child: CircularProgressIndicator()),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    checkSession();
-  }
-
-  Future<void> checkSession() async {
-    final user = await SessionService.getUser();
-
-    setState(() {
-      screen = user == null ? const LoginScreen() : const HomeScreen();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => screen;
 }
