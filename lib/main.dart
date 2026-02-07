@@ -33,7 +33,7 @@ class MyAseApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SplashScreen(),
+      home: SplashScreen(),
     );
   }
 }
