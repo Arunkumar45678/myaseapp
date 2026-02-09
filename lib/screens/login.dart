@@ -62,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await _routeAfterAuth();
-    } catch (_) {
+    } catch (e) {
       _show("Google login failed");
     } finally {
       setState(() => loading = false);
@@ -71,6 +71,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   /* ---------------- MANUAL LOGIN ---------------- */
   Future<void> manualLogin() async {
+    if (usernameCtrl.text.isEmpty || passwordCtrl.text.isEmpty) {
+      _show("Enter username and password");
+      return;
+    }
+
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
       _genCaptcha();
@@ -94,26 +99,18 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      // Create app session using Google-authenticated user id
-      await supabase.auth.setSession(
-        Session(
-          accessToken: 'custom',
-          refreshToken: 'custom',
-          user: User(id: userId),
-        ),
-      );
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } catch (_) {
+    } catch (e) {
       _show("Login failed");
     } finally {
       setState(() => loading = false);
     }
   }
 
+  /* -------- ROUTE AFTER GOOGLE AUTH -------- */
   Future<void> _routeAfterAuth() async {
     final user = supabase.auth.currentUser!;
     final profile = await supabase
@@ -139,6 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -177,20 +175,27 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text("OR login with Username"),
                   const Divider(),
 
+                  const SizedBox(height: 10),
+
                   TextField(
                     controller: usernameCtrl,
                     decoration: _input("Username"),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
                   TextField(
                     controller: passwordCtrl,
                     obscureText: true,
                     decoration: _input("Password"),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
 
-                  Text("Solve: $a - $b = ?"),
+                  Text(
+                    "Solve: $a - $b = ?",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+
                   TextField(
                     controller: captchaCtrl,
                     decoration: _input("Captcha"),
@@ -204,7 +209,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: loading ? null : manualLogin,
                       child: loading
-                          ? const CircularProgressIndicator()
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
                           : const Text("LOGIN"),
                     ),
                   ),
