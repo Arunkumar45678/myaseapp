@@ -18,6 +18,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   final nameCtrl = TextEditingController();
   final mobileCtrl = TextEditingController();
+  final usernameCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final captchaCtrl = TextEditingController();
 
@@ -38,11 +39,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   void initState() {
     super.initState();
-    _generateCaptcha();
+    _genCaptcha();
     _loadDistricts();
   }
 
-  void _generateCaptcha() {
+  void _genCaptcha() {
     final r = Random();
     a = r.nextInt(9) + 1;
     b = r.nextInt(a);
@@ -57,54 +58,37 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       );
 
-  /* =========================
-     LOAD DROPDOWNS
-     ========================= */
-
   Future<void> _loadDistricts() async {
-    final res = await supabase
-        .from('villages')
-        .select('district')
-        .order('district');
-
+    final res =
+        await supabase.from('villages').select('district').order('district');
     districts =
         res.map<String>((e) => e['district'] as String).toSet().toList();
     setState(() {});
   }
 
   Future<void> _loadMandals(String d) async {
-    mandals.clear();
-    villages.clear();
-    mandal = null;
-    village = null;
-
     final res = await supabase
         .from('villages')
         .select('mandal')
         .eq('district', d);
-
     mandals =
         res.map<String>((e) => e['mandal'] as String).toSet().toList();
+    villages.clear();
+    mandal = null;
+    village = null;
     setState(() {});
   }
 
   Future<void> _loadVillages(String m) async {
-    villages.clear();
-    village = null;
-
     final res = await supabase
         .from('villages')
         .select('village')
         .eq('district', district!)
         .eq('mandal', m);
-
     villages = res.map<String>((e) => e['village'] as String).toList();
+    village = null;
     setState(() {});
   }
-
-  /* =========================
-     SUBMIT
-     ========================= */
 
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -114,7 +98,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
-      _generateCaptcha();
+      _genCaptcha();
       setState(() {});
       return;
     }
@@ -123,24 +107,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       final user = supabase.auth.currentUser!;
-
       await supabase.rpc('register_user', params: {
         'uid': user.id,
         'email': user.email,
+        'username': usernameCtrl.text.trim(),
+        'password_input': passwordCtrl.text.trim(),
         'name': nameCtrl.text.trim(),
         'gender': gender,
         'mobile': mobileCtrl.text.trim(),
         'district': district,
         'mandal': mandal,
         'village': village,
-        'password': passwordCtrl.text.trim(),
       });
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } catch (e) {
+    } catch (_) {
       _show("Registration failed");
     } finally {
       setState(() => loading = false);
@@ -167,9 +151,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: Card(
             color: Colors.white,
             elevation: 10,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Form(
@@ -178,7 +161,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text("Email: $email"),
+                    const SizedBox(height: 12),
 
+                    TextFormField(
+                      controller: usernameCtrl,
+                      decoration: _input("Username (Village Code)"),
+                      validator: (v) =>
+                          v!.isEmpty ? "Username required" : null,
+                    ),
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -187,7 +177,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v!.isEmpty ? "Name required" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -198,7 +187,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v!.length != 10 ? "Invalid mobile" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -208,7 +196,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v!.length < 6 ? "Min 6 characters" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     Row(
@@ -234,14 +221,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 8),
-
                     DropdownButtonFormField(
-                      value: district,
                       decoration: _input("District"),
+                      value: district,
                       items: districts
-                          .map((e) => DropdownMenuItem(
-                              value: e, child: Text(e)))
+                          .map((e) =>
+                              DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) {
                         district = v;
@@ -250,15 +235,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v == null ? "Select district" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     DropdownButtonFormField(
-                      value: mandal,
                       decoration: _input("Mandal"),
+                      value: mandal,
                       items: mandals
-                          .map((e) => DropdownMenuItem(
-                              value: e, child: Text(e)))
+                          .map((e) =>
+                              DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) {
                         mandal = v;
@@ -267,15 +251,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v == null ? "Select mandal" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     DropdownButtonFormField(
-                      value: village,
                       decoration: _input("Village"),
+                      value: village,
                       items: villages
-                          .map((e) => DropdownMenuItem(
-                              value: e, child: Text(e)))
+                          .map((e) =>
+                              DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) => village = v,
                       validator: (v) =>
@@ -283,9 +266,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
 
                     const SizedBox(height: 12),
-
                     Text("Solve: $a - $b = ?"),
-                    TextFormField(
+                    TextField(
                       controller: captchaCtrl,
                       decoration: _input("Captcha"),
                       keyboardType: TextInputType.number,
@@ -296,13 +278,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       onChanged: (v) =>
                           setState(() => acceptTerms = v!),
                       title: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => TermsScreen()),
-                          );
-                        },
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => TermsScreen()),
+                        ),
                         child: const Text(
                           "Accept Terms & Conditions",
                           style: TextStyle(
@@ -312,7 +292,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
 
                     const SizedBox(height: 12),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
