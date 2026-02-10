@@ -305,14 +305,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                     const SizedBox(height: 12),
 
-                    if (villageCode != null)
-                      Text(
-                        "Username: $villageCode",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                        ),
-                      ),
+                    TextFormField(
+                      readOnly: true,
+                      initialValue: villageCode ?? "",
+                      decoration: _input("Username"),
+                    ),
 
                     const SizedBox(height: 12),
                     Text("Solve: $a - $b = ?"),
