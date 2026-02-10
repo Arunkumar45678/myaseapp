@@ -18,7 +18,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   final nameCtrl = TextEditingController();
   final mobileCtrl = TextEditingController();
-  final usernameCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final captchaCtrl = TextEditingController();
 
@@ -26,6 +25,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   String? district;
   String? mandal;
   String? village;
+  String? villageCode;
 
   List<String> districts = [];
   List<String> mandals = [];
@@ -58,44 +58,74 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         ),
       );
 
+  /* ---------------- LOAD DISTRICTS ---------------- */
   Future<void> _loadDistricts() async {
     final res =
         await supabase.from('villages').select('district').order('district');
+
     districts =
         res.map<String>((e) => e['district'] as String).toSet().toList();
+
     setState(() {});
   }
 
+  /* ---------------- LOAD MANDALS ---------------- */
   Future<void> _loadMandals(String d) async {
     final res = await supabase
         .from('villages')
         .select('mandal')
         .eq('district', d);
+
     mandals =
         res.map<String>((e) => e['mandal'] as String).toSet().toList();
+
     villages.clear();
     mandal = null;
     village = null;
+    villageCode = null;
+
     setState(() {});
   }
 
+  /* ---------------- LOAD VILLAGES ---------------- */
   Future<void> _loadVillages(String m) async {
     final res = await supabase
         .from('villages')
-        .select('village')
+        .select('village, village_code')
         .eq('district', district!)
         .eq('mandal', m);
+
     villages = res.map<String>((e) => e['village'] as String).toList();
+
     village = null;
+    villageCode = null;
+
     setState(() {});
   }
 
+  /* ---------------- GET VILLAGE CODE ---------------- */
+  Future<void> _loadVillageCode(String v) async {
+    final res = await supabase
+        .from('villages')
+        .select('village_code')
+        .eq('district', district!)
+        .eq('mandal', mandal!)
+        .eq('village', v)
+        .single();
+
+    villageCode = res['village_code'];
+    setState(() {});
+  }
+
+  /* ---------------- SUBMIT ---------------- */
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (!acceptTerms) {
       _show("Accept Terms & Conditions");
       return;
     }
+
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
       _genCaptcha();
@@ -103,14 +133,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       return;
     }
 
+    if (villageCode == null) {
+      _show("Village code not found");
+      return;
+    }
+
     setState(() => loading = true);
 
     try {
       final user = supabase.auth.currentUser!;
+
       await supabase.rpc('register_user', params: {
         'uid': user.id,
         'email': user.email,
-        'username': usernameCtrl.text.trim(),
+        'username': villageCode,
         'password_input': passwordCtrl.text.trim(),
         'name': nameCtrl.text.trim(),
         'gender': gender,
@@ -124,8 +160,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } catch (_) {
-      _show("Registration failed");
+    } catch (e) {
+      final msg = e.toString().toLowerCase();
+
+      if (msg.contains('username')) {
+        _show("Village code already used");
+      } else if (msg.contains('mobile')) {
+        _show("Mobile number already registered");
+      } else {
+        _show("Registration failed");
+      }
     } finally {
       setState(() => loading = false);
     }
@@ -158,17 +202,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               child: Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text("Email: $email"),
-                    const SizedBox(height: 12),
-
-                    TextFormField(
-                      controller: usernameCtrl,
-                      decoration: _input("Username (Village Code)"),
-                      validator: (v) =>
-                          v!.isEmpty ? "Username required" : null,
-                    ),
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -260,10 +295,24 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           .map((e) =>
                               DropdownMenuItem(value: e, child: Text(e)))
                           .toList(),
-                      onChanged: (v) => village = v,
+                      onChanged: (v) {
+                        village = v;
+                        _loadVillageCode(v!);
+                      },
                       validator: (v) =>
                           v == null ? "Select village" : null,
                     ),
+
+                    const SizedBox(height: 12),
+
+                    if (villageCode != null)
+                      Text(
+                        "Username: $villageCode",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
+                      ),
 
                     const SizedBox(height: 12),
                     Text("Solve: $a - $b = ?"),
@@ -281,7 +330,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => TermsScreen()),
+                              builder: (_) => const TermsScreen()),
                         ),
                         child: const Text(
                           "Accept Terms & Conditions",
