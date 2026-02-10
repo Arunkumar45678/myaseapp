@@ -20,7 +20,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final mobileCtrl = TextEditingController();
   final passwordCtrl = TextEditingController();
   final captchaCtrl = TextEditingController();
-  final usernameCtrl = TextEditingController(); // NEW
+  final usernameCtrl = TextEditingController();
 
   String? gender;
   String? district;
@@ -117,8 +117,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         .single();
 
     villageCode = res['village_code'];
-
-    // IMPORTANT: update the username field
     usernameCtrl.text = villageCode ?? "";
 
     setState(() {});
@@ -127,6 +125,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   /* ---------------- SUBMIT ---------------- */
   Future<void> submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (gender == null) {
+      _show("Select gender");
+      return;
+    }
 
     if (!acceptTerms) {
       _show("Accept Terms & Conditions");
@@ -216,6 +219,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     TextFormField(
                       controller: nameCtrl,
                       decoration: _input("Full Name"),
+                      validator: (v) =>
+                          v!.isEmpty ? "Name required" : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -224,6 +229,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       maxLength: 10,
                       keyboardType: TextInputType.phone,
                       decoration: _input("Mobile Number"),
+                      validator: (v) =>
+                          v!.length != 10 ? "Invalid mobile" : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -231,8 +238,34 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       controller: passwordCtrl,
                       obscureText: true,
                       decoration: _input("Password"),
+                      validator: (v) =>
+                          v!.length < 6 ? "Min 6 characters" : null,
                     ),
                     const SizedBox(height: 12),
+
+                    // Gender
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile(
+                            title: const Text("Male"),
+                            value: "Male",
+                            groupValue: gender,
+                            onChanged: (v) =>
+                                setState(() => gender = v as String),
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile(
+                            title: const Text("Female"),
+                            value: "Female",
+                            groupValue: gender,
+                            onChanged: (v) =>
+                                setState(() => gender = v as String),
+                          ),
+                        ),
+                      ],
+                    ),
 
                     DropdownButtonFormField(
                       decoration: _input("District"),
@@ -245,6 +278,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         district = v;
                         _loadMandals(v!);
                       },
+                      validator: (v) =>
+                          v == null ? "Select district" : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -259,6 +294,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         mandal = v;
                         _loadVillages(v!);
                       },
+                      validator: (v) =>
+                          v == null ? "Select mandal" : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -273,6 +310,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         village = v;
                         _loadVillageCode(v!);
                       },
+                      validator: (v) =>
+                          v == null ? "Select village" : null,
                     ),
 
                     const SizedBox(height: 12),
@@ -283,12 +322,41 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       decoration: _input("Username"),
                     ),
 
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: loading ? null : submit,
-                      child: loading
-                          ? const CircularProgressIndicator()
-                          : const Text("SUBMIT"),
+                    const SizedBox(height: 12),
+                    Text("Solve: $a - $b = ?"),
+                    TextField(
+                      controller: captchaCtrl,
+                      decoration: _input("Captcha"),
+                      keyboardType: TextInputType.number,
+                    ),
+
+                    CheckboxListTile(
+                      value: acceptTerms,
+                      onChanged: (v) =>
+                          setState(() => acceptTerms = v!),
+                      title: GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const TermsScreen()),
+                        ),
+                        child: const Text(
+                          "Accept Terms & Conditions",
+                          style: TextStyle(
+                              decoration: TextDecoration.underline),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: loading ? null : submit,
+                        child: loading
+                            ? const CircularProgressIndicator()
+                            : const Text("SUBMIT"),
+                      ),
                     ),
                   ],
                 ),
