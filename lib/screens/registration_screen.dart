@@ -61,66 +61,57 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   /* ---------------- LOAD DISTRICTS ---------------- */
   Future<void> _loadDistricts() async {
-    final res =
-        await supabase.from('villages').select('district').order('district');
+  final res = await supabase.rpc('get_districts');
+  districts = List<String>.from(
+      res.map((e) => e['district']));
+  setState(() {});
+}
 
-    districts =
-        res.map<String>((e) => e['district'] as String).toSet().toList();
-
-    setState(() {});
-  }
 
   /* ---------------- LOAD MANDALS ---------------- */
   Future<void> _loadMandals(String d) async {
-    final res = await supabase
-        .from('villages')
-        .select('mandal')
-        .eq('district', d);
+  final res = await supabase.rpc('get_mandals', params: {
+    'p_district': d
+  });
 
-    mandals =
-        res.map<String>((e) => e['mandal'] as String).toSet().toList();
+  mandals = List<String>.from(
+      res.map((e) => e['mandal']));
 
-    villages.clear();
-    mandal = null;
-    village = null;
-    villageCode = null;
-    usernameCtrl.clear();
+  villages.clear();
+  setState(() {});
+}
 
-    setState(() {});
-  }
 
   /* ---------------- LOAD VILLAGES ---------------- */
   Future<void> _loadVillages(String m) async {
-    final res = await supabase
-        .from('villages')
-        .select('village, village_code')
-        .eq('district', district!)
-        .eq('mandal', m);
+  final res = await supabase.rpc('get_villages', params: {
+    'p_district': district,
+    'p_mandal': m
+  });
 
-    villages = res.map<String>((e) => e['village'] as String).toList();
+  villages = List<String>.from(
+      res.map((e) => e['village']));
 
-    village = null;
-    villageCode = null;
-    usernameCtrl.clear();
+  setState(() {});
+}
 
-    setState(() {});
-  }
 
   /* ---------------- GET VILLAGE CODE ---------------- */
   Future<void> _loadVillageCode(String v) async {
-    final res = await supabase
-        .from('villages')
-        .select('village_code')
-        .eq('district', district!)
-        .eq('mandal', mandal!)
-        .eq('village', v)
-        .single();
+  final res = await supabase.rpc('get_villages', params: {
+    'p_district': district,
+    'p_mandal': mandal
+  });
 
-    villageCode = res['village_code'];
-    usernameCtrl.text = villageCode ?? "";
+  final selected = res.firstWhere(
+      (e) => e['village'] == v);
 
-    setState(() {});
-  }
+  villageCode = selected['village_code'];
+  usernameCtrl.text = villageCode ?? "";
+
+  setState(() {});
+}
+
 
   /* ---------------- SUBMIT ---------------- */
   Future<void> submit() async {
