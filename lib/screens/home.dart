@@ -27,20 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ================= LOAD USER DATA ================= */
   Future<void> _loadUserData() async {
-  final user = supabase.auth.currentUser;
+  final user = Supabase.instance.client.auth.currentUser;
 
   if (user == null) return;
 
   try {
-    final res = await supabase
+    final res = await Supabase.instance.client
         .from('user_profiles')
-        .select('name, username')
-        .eq('id', user.id)   // ✅ CORRECT COLUMN
+        .select('full_name, username')
+        .eq('id', user.id)  // ✅ correct column
         .maybeSingle();
 
     if (res != null) {
       setState(() {
-        userName = res['name'] ?? "";
+        userName = res['full_name'] ?? "";
         username = res['username'] ?? "";
       });
     } else {
@@ -53,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
     print("User Load Error: $e");
   }
 }
+
 
   /* ================= LOGOUT ================= */
   Future<void> _logout() async {
