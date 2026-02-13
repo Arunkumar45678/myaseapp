@@ -13,19 +13,43 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final supabase = Supabase.instance.client;
+
   int index = 0;
+  String userName = "";
+  String username = "";
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  /* ================= LOAD USER DATA ================= */
+  Future<void> _loadUserData() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    final res = await supabase
+        .from('user_profiles')
+        .select('name, username')
+        .eq('uid', user.id)   // ✅ IMPORTANT FIX
+        .single();
+
+    setState(() {
+      userName = res['name'] ?? "";
+      username = res['username'] ?? "";
+    });
+  }
 
   /* ================= LOGOUT ================= */
   Future<void> _logout() async {
-    // Sign out from Google
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}
 
-    // Sign out from Supabase
-    await Supabase.instance.client.auth.signOut();
+    await supabase.auth.signOut();
 
-    // Redirect to login
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -63,50 +87,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
       /* ================= DRAWER ================= */
       drawer: Drawer(
-        backgroundColor: const Color(0xFF0A1F44),
-        child: ListView(
+        child: Column(
           children: [
-            const DrawerHeader(
-              child: Text(
-                "ASE Menu",
-                style: TextStyle(color: Colors.white, fontSize: 22),
+
+            /// 🔥 USER HEADER
+            UserAccountsDrawerHeader(
+              accountName: Text(
+                userName.isEmpty ? "Loading..." : userName,
+              ),
+              accountEmail: Text(username),
+              currentAccountPicture: const CircleAvatar(
+                child: Icon(Icons.person, size: 30),
               ),
             ),
+
             ListTile(
-              title: const Text("Home",
-                  style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.home),
+              title: const Text("Home"),
               onTap: () {
                 setState(() => index = 0);
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text("Profile",
-                  style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.person),
+              title: const Text("Profile"),
               onTap: () {
                 setState(() => index = 2);
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text("Logout",
-                  style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.logout),
+              title: const Text("Logout"),
               onTap: _logout,
             ),
           ],
         ),
       ),
 
-      /* ================= BODY ================= */
       body: _getBody(),
 
       /* ================= BOTTOM NAV ================= */
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
-        backgroundColor: const Color(0xFF0A1F44),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
         items: const [
           BottomNavigationBarItem(
               icon: Icon(Icons.home), label: "Home"),
