@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/dashboard_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -11,19 +10,13 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final supabase = Supabase.instance.client;
   final PageController _pageController = PageController();
-
   int currentPage = 0;
   Timer? _timer;
-
-  String userName = "";
-  String username = "";
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
     _startAutoSlide();
   }
 
@@ -48,58 +41,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  /* ---------------- LOAD USER DATA ---------------- */
-  Future<void> _loadUserData() async {
-    final user = supabase.auth.currentUser;
-
-    if (user == null) return;
-
-    final res = await supabase
-        .from('user_profiles')
-        .select('name, username')
-        .eq('id', user.id)
-        .single();
-
-    setState(() {
-      userName = res['name'] ?? "";
-      username = res['username'] ?? "";
-    });
-  }
-
-  /* ---------------- UI ---------------- */
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          /// 🔹 USER INFO
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  userName.isEmpty ? "Loading..." : userName,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           /// 🔹 CAROUSEL
+          const SizedBox(height: 16),
           SizedBox(
             height: 180,
             child: PageView(
@@ -115,7 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          /// 🔹 DOT INDICATORS
+          /// 🔹 DOTS
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
