@@ -27,20 +27,32 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ================= LOAD USER DATA ================= */
   Future<void> _loadUserData() async {
-    final user = supabase.auth.currentUser;
-    if (user == null) return;
+  final user = supabase.auth.currentUser;
 
+  if (user == null) return;
+
+  try {
     final res = await supabase
         .from('user_profiles')
         .select('name, username')
-        .eq('uid', user.id)   // ✅ IMPORTANT FIX
-        .single();
+        .eq('id', user.id)   // ✅ CORRECT COLUMN
+        .maybeSingle();
 
-    setState(() {
-      userName = res['name'] ?? "";
-      username = res['username'] ?? "";
-    });
+    if (res != null) {
+      setState(() {
+        userName = res['name'] ?? "";
+        username = res['username'] ?? "";
+      });
+    } else {
+      setState(() {
+        userName = "User";
+        username = "";
+      });
+    }
+  } catch (e) {
+    print("User Load Error: $e");
   }
+}
 
   /* ================= LOGOUT ================= */
   Future<void> _logout() async {
