@@ -61,57 +61,52 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   /* ---------------- LOAD DISTRICTS ---------------- */
   Future<void> _loadDistricts() async {
-  final res = await supabase.rpc('get_districts');
-  districts = List<String>.from(
-      res.map((e) => e['district']));
-  setState(() {});
-}
-
+    final res = await supabase.rpc('get_districts');
+    districts = List<String>.from(res.map((e) => e['district']));
+    setState(() {});
+  }
 
   /* ---------------- LOAD MANDALS ---------------- */
   Future<void> _loadMandals(String d) async {
-  final res = await supabase.rpc('get_mandals', params: {
-    'p_district': d
-  });
+    final res =
+        await supabase.rpc('get_mandals', params: {'p_district': d});
 
-  mandals = List<String>.from(
-      res.map((e) => e['mandal']));
-
-  villages.clear();
-  setState(() {});
-}
-
+    mandals = List<String>.from(res.map((e) => e['mandal']));
+    villages.clear();
+    village = null;
+    usernameCtrl.clear();
+    setState(() {});
+  }
 
   /* ---------------- LOAD VILLAGES ---------------- */
   Future<void> _loadVillages(String m) async {
-  final res = await supabase.rpc('get_villages', params: {
-    'p_district': district,
-    'p_mandal': m
-  });
+    final res = await supabase.rpc('get_villages', params: {
+      'p_district': district,
+      'p_mandal': m
+    });
 
-  villages = List<String>.from(
-      res.map((e) => e['village']));
-
-  setState(() {});
-}
-
+    villages = List<String>.from(res.map((e) => e['village']));
+    usernameCtrl.clear();
+    setState(() {});
+  }
 
   /* ---------------- GET VILLAGE CODE ---------------- */
   Future<void> _loadVillageCode(String v) async {
-  final res = await supabase.rpc('get_villages', params: {
-    'p_district': district,
-    'p_mandal': mandal
-  });
+    final res = await supabase.rpc('get_villages', params: {
+      'p_district': district,
+      'p_mandal': mandal
+    });
 
-  final selected = res.firstWhere(
-      (e) => e['village'] == v);
+    final selected =
+        res.firstWhere((e) => e['village'] == v, orElse: () => null);
 
-  villageCode = selected['village_code'];
-  usernameCtrl.text = villageCode ?? "";
+    if (selected != null) {
+      villageCode = selected['village_code'];
+      usernameCtrl.text = villageCode ?? "";
+    }
 
-  setState(() {});
-}
-
+    setState(() {});
+  }
 
   /* ---------------- SUBMIT ---------------- */
   Future<void> submit() async {
@@ -149,7 +144,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         'email': user.email,
         'username': villageCode,
         'password_input': passwordCtrl.text.trim(),
-        'name': nameCtrl.text.trim(),
+        'full_name': nameCtrl.text.trim(),   // ✅ fixed param
         'gender': gender,
         'mobile': mobileCtrl.text.trim(),
         'district': district,
@@ -157,17 +152,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         'village': village,
       });
 
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-   } catch (e) {
-  _show(e.toString());   // show real DB error
-  print(e);
-}
-
+    } catch (e) {
+      _show(e.toString()); // show real DB error
     } finally {
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -191,14 +185,15 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           child: Card(
             color: Colors.white,
             elevation: 10,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
                 child: Column(
                   children: [
+
                     Text("Email: $email"),
                     const SizedBox(height: 12),
 
@@ -229,7 +224,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Gender
+                    /// Gender
                     Row(
                       children: [
                         Expanded(
@@ -299,7 +294,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       validator: (v) =>
                           v == null ? "Select village" : null,
                     ),
-
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -310,10 +304,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
                     const SizedBox(height: 12),
                     Text("Solve: $a - $b = ?"),
+
                     TextField(
                       controller: captchaCtrl,
-                      decoration: _input("Captcha"),
                       keyboardType: TextInputType.number,
+                      decoration: _input("Captcha"),
                     ),
 
                     CheckboxListTile(
@@ -335,6 +330,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     ),
 
                     const SizedBox(height: 12),
+
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
