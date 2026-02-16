@@ -27,15 +27,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ================= LOAD USER DATA ================= */
   Future<void> _loadUserData() async {
-  final user = Supabase.instance.client.auth.currentUser;
 
-  if (user == null) return;
+  // 1️⃣ Try Supabase auth user (Google login)
+  final authUser = Supabase.instance.client.auth.currentUser;
+
+  String? uid;
+
+  if (authUser != null) {
+    uid = authUser.id;
+  } else {
+    // 2️⃣ Manual login → load from local session
+    uid = await SessionService.getUser();
+  }
+
+  if (uid == null) return;
 
   try {
     final res = await Supabase.instance.client
         .from('user_profiles')
         .select('full_name, username')
-        .eq('id', user.id)  // ✅ correct column
+        .eq('id', uid)
         .maybeSingle();
 
     if (res != null) {
