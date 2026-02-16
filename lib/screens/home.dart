@@ -28,54 +28,62 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ================= LOAD USER DATA ================= */
   Future<void> _loadUserData() async {
+    final authUser = supabase.auth.currentUser;
 
-  // 1️⃣ Try Supabase auth user (Google login)
-  final authUser = Supabase.instance.client.auth.currentUser;
+    String? uid;
 
-  String? uid;
+    if (authUser != null) {
+      // Google login
+      uid = authUser.id;
 
-  if (authUser != null) {
-    uid = authUser.id;
-  } else {
-    // 2️⃣ Manual login → load from local session
-    uid = await SessionService.getUser();
-  }
-
-  if (uid == null) return;
-
-  try {
-    final res = await Supabase.instance.client
-        .from('user_profiles')
-        .select('full_name, username')
-        .eq('id', uid)
-        .maybeSingle();
-
-    if (res != null) {
-      setState(() {
-        userName = res['full_name'] ?? "";
-        username = res['username'] ?? "";
-      });
+      // Save for future app restarts
+      await SessionService.saveUser(uid);
     } else {
-      setState(() {
-        userName = "User";
-        username = "";
-      });
+      // Manual login
+      uid = await SessionService.getUser();
     }
-  } catch (e) {
-    print("User Load Error: $e");
-  }
-}
 
+    if (uid == null) return;
+
+    try {
+      final res = await supabase
+          .from('user_profiles')
+          .select('full_name, username')
+          .eq('id', uid)
+          .maybeSingle();
+
+      if (res != null) {
+        setState(() {
+          userName = res['full_name'] ?? "";
+          username = res['username'] ?? "";
+        });
+      } else {
+        setState(() {
+          userName = "User";
+          username = "";
+        });
+      }
+    } catch (e) {
+      print("User Load Error: $e");
+    }
+  }
 
   /* ================= LOGOUT ================= */
   Future<void> _logout() async {
+
+    // 1️⃣ Clear local session (manual login)
+    await SessionService.clear();
+
+    // 2️⃣ Google logout if signed in
     try {
       await GoogleSignIn().signOut();
     } catch (_) {}
 
+    // 3️⃣ Supabase logout (OAuth)
     await supabase.auth.signOut();
 
     if (!mounted) return;
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -115,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
 
-            /// 🔥 USER HEADER
+            /// USER HEADER
             UserAccountsDrawerHeader(
               accountName: Text(
                 userName.isEmpty ? "Loading..." : userName,
@@ -158,12 +166,9 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
         items: const [
-          BottomNavigationBarItem(
-              icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.info), label: "Info"),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: "Info"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
     );
