@@ -161,16 +161,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
-    } catch (e) {
-      final msg = e.toString().toLowerCase();
+   } catch (e) {
+  _show(e.toString());   // show real DB error
+  print(e);
+}
 
-      if (msg.contains('username')) {
-        _show("Village code already used");
-      } else if (msg.contains('mobile')) {
-        _show("Mobile number already registered");
-      } else {
-        _show("Registration failed");
-      }
     } finally {
       setState(() => loading = false);
     }
