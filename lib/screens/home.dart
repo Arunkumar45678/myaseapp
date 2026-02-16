@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'login.dart';
 import 'dashboard.dart';
+import '../services/session_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
