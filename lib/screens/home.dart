@@ -14,6 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+
   final supabase = Supabase.instance.client;
 
   int index = 0;
@@ -26,58 +27,55 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserData();
   }
 
-  /* ================= LOAD USER DATA ================= */
+  /* ---------------- LOAD USER DATA ---------------- */
+
   Future<void> _loadUserData() async {
 
-  final authUser = supabase.auth.currentUser;
+    final authUser = supabase.auth.currentUser;
+    String? uid;
 
-  String? uid;
+    if (authUser != null) {
+      uid = authUser.id;
+    } else {
+      uid = await SessionService.getUser();
+    }
 
-  if (authUser != null) {
-    uid = authUser.id;
-    print("GOOGLE UID: $uid");
-  } else {
-    uid = await SessionService.getUser();
-    print("MANUAL UID: $uid");
+    if (uid == null) return;
+
+    final res = await supabase
+        .from('user_profiles')
+        .select('full_name, username')
+        .eq('id', uid)
+        .maybeSingle();
+
+    if (res != null) {
+      setState(() {
+        userName = res['full_name'] ?? "";
+        username = res['username'] ?? "";
+      });
+    }
   }
 
-  if (uid == null) return;
+  /* ---------------- LOGOUT ---------------- */
 
-  final res = await supabase
-      .from('user_profiles')
-      .select('full_name, username')
-      .eq('id', uid)
-      .maybeSingle();
-
-  print("PROFILE RESULT: $res");
-
-  if (res != null) {
-    setState(() {
-      userName = res['full_name'] ?? "";
-      username = res['username'] ?? "";
-    });
-  }
-}
-
-
-  /* ================= LOGOUT ================= */
   Future<void> _logout() async {
 
-  try { await GoogleSignIn().signOut(); } catch (_) {}
+    try { await GoogleSignIn().signOut(); } catch (_) {}
 
-  await supabase.auth.signOut();
-  await SessionService.clear();
+    await supabase.auth.signOut();
+    await SessionService.clear();
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  Navigator.pushAndRemoveUntil(
-    context,
-    MaterialPageRoute(builder: (_) => const LoginScreen()),
-    (_) => false,
-  );
-}
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+  }
 
-  /* ================= BODY ================= */
+  /* ---------------- BODY ---------------- */
+
   Widget _getBody() {
     switch (index) {
       case 0:
@@ -91,8 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /* ---------------- UI ---------------- */
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("ASE Dashboard"),
@@ -104,12 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
 
-      /* ================= DRAWER ================= */
       drawer: Drawer(
         child: Column(
           children: [
 
-            /// USER HEADER
             UserAccountsDrawerHeader(
               accountName: Text(
                 userName.isEmpty ? "Loading..." : userName,
@@ -128,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context);
               },
             ),
+
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text("Profile"),
@@ -136,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pop(context);
               },
             ),
+
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text("Logout"),
@@ -147,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       body: _getBody(),
 
-      /* ================= BOTTOM NAV ================= */
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
