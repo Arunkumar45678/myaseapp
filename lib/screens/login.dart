@@ -15,6 +15,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+
   final supabase = Supabase.instance.client;
 
   final usernameCtrl = TextEditingController();
@@ -46,13 +47,18 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
   /* ================= GOOGLE LOGIN ================= */
+
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
 
-      final googleUser =
-          await GoogleSignIn(scopes: ['email']).signIn();
-      if (googleUser == null) return;
+      print("GOOGLE LOGIN START");
+
+      final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
+      if (googleUser == null) {
+        print("Google cancelled");
+        return;
+      }
 
       final auth = await googleUser.authentication;
 
@@ -62,19 +68,48 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: auth.accessToken,
       );
 
-      await _routeAfterAuth();
+      print("Google auth success");
+
+      final user = supabase.auth.currentUser!;
+      print("SUPABASE UID: ${user.id}");
+
+      final profile = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profile == null) {
+        print("NO PROFILE → go to registration");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const RegistrationScreen()),
+        );
+      } else {
+        print("PROFILE FOUND → go to dashboard");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
 
     } catch (e) {
+      print("GOOGLE LOGIN ERROR: $e");
       _show("Google login failed");
     } finally {
       setState(() => loading = false);
     }
   }
 
-  /* ================= MANUAL LOGIN ================= */
+  /* ================= MANUAL LOGIN DEBUG ================= */
+
   Future<void> manualLogin() async {
-    if (usernameCtrl.text.isEmpty || passwordCtrl.text.isEmpty) {
-      _show("Enter username and password");
+
+    final uname = usernameCtrl.text.trim();
+    final pass = passwordCtrl.text.trim();
+
+    if (uname.isEmpty || pass.isEmpty) {
+      _show("Enter username & password");
       return;
     }
 
@@ -88,56 +123,62 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
 
     try {
-      final result = await supabase.rpc(
-        'login_user',
-        params: {
-          'username_input': usernameCtrl.text.trim(),
-          'password_input': passwordCtrl.text.trim(),
-        },
-      );
 
-      print("LOGIN RPC RESULT = $result");
+      print("----- MANUAL LOGIN DEBUG START -----");
+      print("USERNAME: $uname");
+      print("PASSWORD LENGTH: ${pass.length}");
 
-      if (result == null) {
-        _show("Invalid username or password");
+      /// 1️⃣ Check username exists
+      final userCheck = await supabase
+          .from('user_profiles')
+          .select('id, username')
+          .eq('username', uname)
+          .maybeSingle();
+
+      print("DB LOOKUP RESULT: $userCheck");
+
+      if (userCheck == null) {
+        _show("Username not found");
         return;
       }
 
+      /// 2️⃣ Call RPC
+      final result = await supabase.rpc(
+        'login_user',
+        params: {
+          'username_input': uname,
+          'password_input': pass,
+        },
+      );
+
+      print("RPC RESULT: $result");
+
+      if (result == null) {
+        _show("Wrong password OR RPC returned NULL");
+        return;
+      }
+
+      /// 3️⃣ Save UID locally
       final uid = result.toString();
+      print("UID FROM RPC: $uid");
 
-      /// ⭐⭐⭐ CRITICAL FIX
       await SessionService.saveUser(uid);
+      print("UID SAVED LOCALLY");
 
+      /// 4️⃣ Navigate
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
 
+      print("----- LOGIN SUCCESS -----");
+
     } catch (e) {
-      print(e);
-      _show("Login failed");
+      print("MANUAL LOGIN ERROR: $e");
+      _show("Login error: $e");
     } finally {
       setState(() => loading = false);
     }
-  }
-
-  /* ================= ROUTE AFTER GOOGLE ================= */
-  Future<void> _routeAfterAuth() async {
-    final user = supabase.auth.currentUser!;
-
-    final profile = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            profile == null ? const RegistrationScreen() : const HomeScreen(),
-      ),
-    );
   }
 
   void _show(String msg) {
@@ -145,8 +186,11 @@ class _LoginScreenState extends State<LoginScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  /* ================= UI ================= */
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
@@ -155,8 +199,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Card(
             color: Colors.white,
             elevation: 10,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -164,11 +208,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
 
                   Image.asset("assets/images/logo.png", height: 70),
+
                   const SizedBox(height: 12),
 
                   const Text(
                     "Welcome to ASE",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 6),
@@ -230,6 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           : const Text("LOGIN"),
                     ),
                   ),
+
                 ],
               ),
             ),
