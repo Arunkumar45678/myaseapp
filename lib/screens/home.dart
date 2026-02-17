@@ -28,68 +28,54 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /* ================= LOAD USER DATA ================= */
   Future<void> _loadUserData() async {
-    final authUser = supabase.auth.currentUser;
 
-    String? uid;
+  final authUser = supabase.auth.currentUser;
 
-    if (authUser != null) {
-      // Google login
-      uid = authUser.id;
+  String? uid;
 
-      // Save for future app restarts
-      await SessionService.saveUser(uid);
-    } else {
-      // Manual login
-      uid = await SessionService.getUser();
-    }
-
-    if (uid == null) return;
-
-    try {
-      final res = await supabase
-          .from('user_profiles')
-          .select('full_name, username')
-          .eq('id', uid)
-          .maybeSingle();
-
-      if (res != null) {
-        setState(() {
-          userName = res['full_name'] ?? "";
-          username = res['username'] ?? "";
-        });
-      } else {
-        setState(() {
-          userName = "User";
-          username = "";
-        });
-      }
-    } catch (e) {
-      print("User Load Error: $e");
-    }
+  if (authUser != null) {
+    uid = authUser.id;
+    print("GOOGLE UID: $uid");
+  } else {
+    uid = await SessionService.getUser();
+    print("MANUAL UID: $uid");
   }
+
+  if (uid == null) return;
+
+  final res = await supabase
+      .from('user_profiles')
+      .select('full_name, username')
+      .eq('id', uid)
+      .maybeSingle();
+
+  print("PROFILE RESULT: $res");
+
+  if (res != null) {
+    setState(() {
+      userName = res['full_name'] ?? "";
+      username = res['username'] ?? "";
+    });
+  }
+}
+
 
   /* ================= LOGOUT ================= */
   Future<void> _logout() async {
 
-    // 1️⃣ Clear local session (manual login)
-    await SessionService.clear();
+  try { await GoogleSignIn().signOut(); } catch (_) {}
 
-    // 2️⃣ Google logout if signed in
-    try {
-      await GoogleSignIn().signOut();
-    } catch (_) {}
+  await supabase.auth.signOut();
+  await SessionService.clear();
 
-    // 3️⃣ Supabase logout (OAuth)
-    await supabase.auth.signOut();
+  if (!mounted) return;
 
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (_) => false,
-    );
-  }
+  Navigator.pushAndRemoveUntil(
+    context,
+    MaterialPageRoute(builder: (_) => const LoginScreen()),
+    (_) => false,
+  );
+}
 
   /* ================= BODY ================= */
   Widget _getBody() {
