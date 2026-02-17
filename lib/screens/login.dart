@@ -28,10 +28,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _genCaptcha();
+    _generateCaptcha();
   }
 
-  void _genCaptcha() {
+  void _generateCaptcha() {
     final r = Random();
     a = r.nextInt(9) + 1;
     b = r.nextInt(a);
@@ -46,19 +46,14 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  /* ================= GOOGLE LOGIN ================= */
+  /* ---------------- GOOGLE LOGIN ---------------- */
 
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
 
-      print("GOOGLE LOGIN START");
-
       final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
-      if (googleUser == null) {
-        print("Google cancelled");
-        return;
-      }
+      if (googleUser == null) return;
 
       final auth = await googleUser.authentication;
 
@@ -68,10 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: auth.accessToken,
       );
 
-      print("Google auth success");
-
       final user = supabase.auth.currentUser!;
-      print("SUPABASE UID: ${user.id}");
 
       final profile = await supabase
           .from('user_profiles')
@@ -79,83 +71,78 @@ class _LoginScreenState extends State<LoginScreen> {
           .eq('id', user.id)
           .maybeSingle();
 
-      if (profile == null) {
-        print("NO PROFILE → go to registration");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const RegistrationScreen()),
-        );
-      } else {
-        print("PROFILE FOUND → go to dashboard");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              profile == null ? const RegistrationScreen() : const HomeScreen(),
+        ),
+      );
 
-    } catch (e) {
-      print("GOOGLE LOGIN ERROR: $e");
+    } catch (_) {
       _show("Google login failed");
     } finally {
       setState(() => loading = false);
     }
   }
 
-  /* ================= MANUAL LOGIN DEBUG ================= */
-Future<void> manualLogin() async {
+  /* ---------------- MANUAL LOGIN ---------------- */
 
-  final uname = usernameCtrl.text.trim();
-  final pass = passwordCtrl.text.trim();
+  Future<void> manualLogin() async {
 
-  if (uname.isEmpty || pass.isEmpty) {
-    _show("Enter username & password");
-    return;
-  }
+    final uname = usernameCtrl.text.trim();
+    final pass = passwordCtrl.text.trim();
 
-  if (int.tryParse(captchaCtrl.text) != (a - b)) {
-    _show("Captcha incorrect");
-    _genCaptcha();
-    setState(() {});
-    return;
-  }
-
-  setState(() => loading = true);
-
-  try {
-
-    final uid = await supabase.rpc(
-      'login_user',
-      params: {
-        'username_input': uname,
-        'password_input': pass,
-      },
-    );
-
-    print("RPC UID = $uid");
-
-    if (uid == null) {
-      _show("Invalid username or password");
+    if (uname.isEmpty || pass.isEmpty) {
+      _show("Enter username & password");
       return;
     }
 
-    /// ⭐ SAVE UID LOCALLY (THIS WAS MISSING BEFORE)
-    await SessionService.saveUser(uid.toString());
+    if (int.tryParse(captchaCtrl.text) != (a - b)) {
+      _show("Captcha incorrect");
+      _generateCaptcha();
+      setState(() {});
+      return;
+    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    setState(() => loading = true);
 
-  } catch (e) {
-    print("LOGIN ERROR: $e");
-    _show("Login failed");
-  } finally {
-    setState(() => loading = false);
+    try {
+
+      final uid = await supabase.rpc(
+        'login_user',
+        params: {
+          'username_input': uname,
+          'password_input': pass,
+        },
+      );
+
+      if (uid == null) {
+        _show("Invalid username or password");
+        return;
+      }
+
+      /// Save UID locally for manual login session
+      await SessionService.saveUser(uid.toString());
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+
+    } catch (_) {
+      _show("Login failed");
+    } finally {
+      setState(() => loading = false);
+    }
   }
-}
 
-  
-  /* ================= UI ================= */
+  void _show(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  /* ---------------- UI ---------------- */
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +233,6 @@ Future<void> manualLogin() async {
                           : const Text("LOGIN"),
                     ),
                   ),
-
                 ],
               ),
             ),
