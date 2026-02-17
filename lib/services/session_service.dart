@@ -6,13 +6,17 @@ class SessionService {
 
   static Future<void> saveUser(String uid) async {
     await _storage.write(key: _key, value: uid);
+    print("SESSION SAVED UID = $uid");
   }
 
   static Future<String?> getUser() async {
-    return await _storage.read(key: _key);
+    final uid = await _storage.read(key: _key);
+    print("SESSION READ UID = $uid");
+    return uid;
   }
 
   static Future<void> clear() async {
     await _storage.delete(key: _key);
+    print("SESSION CLEARED");
   }
 }
