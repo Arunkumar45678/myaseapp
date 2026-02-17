@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home.dart';
 import 'registration_screen.dart';
+import '../services/session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -44,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  /* ---------------- GOOGLE LOGIN ---------------- */
+  /* ================= GOOGLE LOGIN ================= */
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
@@ -61,7 +62,9 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: auth.accessToken,
       );
 
+      // Google login uses Supabase session automatically
       await _routeAfterAuth();
+
     } catch (e) {
       _show("Google login failed");
     } finally {
@@ -69,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /* ---------------- MANUAL LOGIN ---------------- */
+  /* ================= MANUAL LOGIN ================= */
   Future<void> manualLogin() async {
     if (usernameCtrl.text.isEmpty || passwordCtrl.text.isEmpty) {
       _show("Enter username and password");
@@ -86,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
 
     try {
-      final userId = await supabase.rpc(
+      final result = await supabase.rpc(
         'login_user',
         params: {
           'username_input': usernameCtrl.text.trim(),
@@ -94,15 +97,23 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
-      if (userId == null) {
+      if (result == null) {
         _show("Invalid username or password");
         return;
       }
+
+      /// 🔥 IMPORTANT FIX
+      /// Save UID locally so dashboard can load user profile
+      final uid = result.toString();
+      await SessionService.saveUser(uid);
+
+      if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
+
     } catch (e) {
       _show("Login failed");
     } finally {
@@ -110,14 +121,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /* -------- ROUTE AFTER GOOGLE AUTH -------- */
+  /* ================= ROUTE AFTER GOOGLE ================= */
   Future<void> _routeAfterAuth() async {
     final user = supabase.auth.currentUser!;
+
     final profile = await supabase
         .from('user_profiles')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
+
+    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
@@ -152,11 +166,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Image.asset("assets/images/logo.png", height: 70),
                   const SizedBox(height: 12),
+
                   const Text(
                     "Welcome to ASE",
                     style:
                         TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
+
                   const SizedBox(height: 6),
                   const Text("Sign in to continue"),
 
@@ -174,7 +190,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Divider(),
                   const Text("OR login with Username"),
                   const Divider(),
-
                   const SizedBox(height: 10),
 
                   TextField(
@@ -209,9 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: loading ? null : manualLogin,
                       child: loading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text("LOGIN"),
                     ),
                   ),
