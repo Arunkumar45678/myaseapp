@@ -102,90 +102,59 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /* ================= MANUAL LOGIN DEBUG ================= */
+Future<void> manualLogin() async {
 
-  Future<void> manualLogin() async {
+  final uname = usernameCtrl.text.trim();
+  final pass = passwordCtrl.text.trim();
 
-    final uname = usernameCtrl.text.trim();
-    final pass = passwordCtrl.text.trim();
+  if (uname.isEmpty || pass.isEmpty) {
+    _show("Enter username & password");
+    return;
+  }
 
-    if (uname.isEmpty || pass.isEmpty) {
-      _show("Enter username & password");
+  if (int.tryParse(captchaCtrl.text) != (a - b)) {
+    _show("Captcha incorrect");
+    _genCaptcha();
+    setState(() {});
+    return;
+  }
+
+  setState(() => loading = true);
+
+  try {
+
+    final uid = await supabase.rpc(
+      'login_user',
+      params: {
+        'username_input': uname,
+        'password_input': pass,
+      },
+    );
+
+    print("RPC UID = $uid");
+
+    if (uid == null) {
+      _show("Invalid username or password");
       return;
     }
 
-    if (int.tryParse(captchaCtrl.text) != (a - b)) {
-      _show("Captcha incorrect");
-      _genCaptcha();
-      setState(() {});
-      return;
-    }
+    /// ⭐ SAVE UID LOCALLY (THIS WAS MISSING BEFORE)
+    await SessionService.saveUser(uid.toString());
 
-    setState(() => loading = true);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
 
-    try {
-
-      print("----- MANUAL LOGIN DEBUG START -----");
-      print("USERNAME: $uname");
-      print("PASSWORD LENGTH: ${pass.length}");
-
-      /// 1️⃣ Check username exists
-      final userCheck = await supabase
-          .from('user_profiles')
-          .select('id, username')
-          .eq('username', uname)
-          .maybeSingle();
-
-      print("DB LOOKUP RESULT: $userCheck");
-
-      if (userCheck == null) {
-        _show("Username not found");
-        return;
-      }
-
-      /// 2️⃣ Call RPC
-      final result = await supabase.rpc(
-        'login_user',
-        params: {
-          'username_input': uname,
-          'password_input': pass,
-        },
-      );
-
-      print("RPC RESULT: $result");
-
-      if (result == null) {
-        _show("Wrong password OR RPC returned NULL");
-        return;
-      }
-
-      /// 3️⃣ Save UID locally
-      final uid = result.toString();
-      print("UID FROM RPC: $uid");
-
-      await SessionService.saveUser(uid);
-      print("UID SAVED LOCALLY");
-
-      /// 4️⃣ Navigate
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-
-      print("----- LOGIN SUCCESS -----");
-
-    } catch (e) {
-      print("MANUAL LOGIN ERROR: $e");
-      _show("Login error: $e");
-    } finally {
-      setState(() => loading = false);
-    }
+  } catch (e) {
+    print("LOGIN ERROR: $e");
+    _show("Login failed");
+  } finally {
+    setState(() => loading = false);
   }
+}
 
-  void _show(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
-  }
-
+  
   /* ================= UI ================= */
 
   @override
