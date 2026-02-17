@@ -62,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
         accessToken: auth.accessToken,
       );
 
-      // Google login uses Supabase session automatically
       await _routeAfterAuth();
 
     } catch (e) {
@@ -97,17 +96,17 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
+      print("LOGIN RPC RESULT = $result");
+
       if (result == null) {
         _show("Invalid username or password");
         return;
       }
 
-      /// 🔥 IMPORTANT FIX
-      /// Save UID locally so dashboard can load user profile
       final uid = result.toString();
-      await SessionService.saveUser(uid);
 
-      if (!mounted) return;
+      /// ⭐⭐⭐ CRITICAL FIX
+      await SessionService.saveUser(uid);
 
       Navigator.pushReplacement(
         context,
@@ -115,6 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
     } catch (e) {
+      print(e);
       _show("Login failed");
     } finally {
       setState(() => loading = false);
@@ -130,8 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
-
-    if (!mounted) return;
 
     Navigator.pushReplacement(
       context,
@@ -164,13 +162,13 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+
                   Image.asset("assets/images/logo.png", height: 70),
                   const SizedBox(height: 12),
 
                   const Text(
                     "Welcome to ASE",
-                    style:
-                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 6),
@@ -190,12 +188,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Divider(),
                   const Text("OR login with Username"),
                   const Divider(),
+
                   const SizedBox(height: 10),
 
                   TextField(
                     controller: usernameCtrl,
                     decoration: _input("Username"),
                   ),
+
                   const SizedBox(height: 12),
 
                   TextField(
@@ -203,12 +203,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: _input("Password"),
                   ),
+
                   const SizedBox(height: 12),
 
                   Text(
                     "Solve: $a - $b = ?",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
+
                   const SizedBox(height: 6),
 
                   TextField(
