@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../widgets/dashboard_card.dart';
 import '../services/session_service.dart';
 
@@ -13,7 +12,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-
   final supabase = Supabase.instance.client;
   final PageController _pageController = PageController();
 
@@ -27,7 +25,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _startAutoSlide();
-    _loadUserData();
+    _loadUser();
   }
 
   @override
@@ -39,32 +37,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /* ---------------- AUTO SLIDE ---------------- */
   void _startAutoSlide() {
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       if (_pageController.hasClients) {
         currentPage = (currentPage + 1) % 3;
         _pageController.animateToPage(
           currentPage,
-          duration: const Duration(milliseconds: 500),
+          duration: const Duration(milliseconds: 400),
           curve: Curves.easeInOut,
         );
       }
     });
   }
 
-  /* ---------------- LOAD USER DATA ---------------- */
-  Future<void> _loadUserData() async {
-
-    // Try Google auth session first
-    final authUser = supabase.auth.currentUser;
-
+  /* ---------------- LOAD USER ---------------- */
+  Future<void> _loadUser() async {
     String? uid;
 
+    // 1️⃣ Google login user
+    final authUser = supabase.auth.currentUser;
     if (authUser != null) {
       uid = authUser.id;
-    } else {
-      // Manual login stored locally
-      uid = await SessionService.getUser();
     }
+
+    // 2️⃣ Manual login stored session
+    uid ??= await SessionService.getUid();
 
     if (uid == null) return;
 
@@ -75,13 +71,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .eq('id', uid)
           .maybeSingle();
 
-      if (res != null && mounted) {
+      if (res != null) {
         setState(() {
           fullName = res['full_name'] ?? "";
           username = res['username'] ?? "";
         });
       }
-
     } catch (e) {
       debugPrint("Dashboard user load error: $e");
     }
@@ -95,67 +90,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          /// 🔹 USER NAME HEADER
+          /// 🔹 NAME HEADER
           Padding(
-            padding: const EdgeInsets.fromLTRB(16,16,16,8),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   fullName.isEmpty ? "Loading..." : fullName,
                   style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   username,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(color: Colors.grey),
                 ),
               ],
             ),
           ),
 
           /// 🔹 CAROUSEL
-          const SizedBox(height: 10),
-
           SizedBox(
             height: 180,
             child: PageView(
               controller: _pageController,
-              onPageChanged: (index) {
-                setState(() => currentPage = index);
-              },
-              children: [
-                _carouselImage("assets/images/slide1.jpg"),
-                _carouselImage("assets/images/slide2.jpg"),
-                _carouselImage("assets/images/slide3.jpg"),
+              onPageChanged: (i) => setState(() => currentPage = i),
+              children: const [
+                _CarouselImage("assets/images/slide1.jpg"),
+                _CarouselImage("assets/images/slide2.jpg"),
+                _CarouselImage("assets/images/slide3.jpg"),
               ],
             ),
           ),
 
-          /// 🔹 DOT INDICATORS
+          /// 🔹 DOTS
           const SizedBox(height: 10),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (index) {
+            children: List.generate(3, (i) {
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: currentPage == index ? 12 : 8,
-                height: currentPage == index ? 12 : 8,
+                width: currentPage == i ? 12 : 8,
+                height: currentPage == i ? 12 : 8,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: currentPage == index
-                      ? Colors.blue
-                      : Colors.grey.shade400,
+                  color:
+                      currentPage == i ? Colors.blue : Colors.grey.shade400,
                 ),
               );
             }),
@@ -163,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 20),
 
-          /// 🔹 DASHBOARD GRID
+          /// 🔹 GRID
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GridView.count(
@@ -188,16 +169,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+}
 
-  Widget _carouselImage(String path) {
+/* ---------------- CAROUSEL IMAGE ---------------- */
+class _CarouselImage extends StatelessWidget {
+  final String path;
+  const _CarouselImage(this.path);
+
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
-          path,
-          fit: BoxFit.cover,
-        ),
+        child: Image.asset(path, fit: BoxFit.cover),
       ),
     );
   }
