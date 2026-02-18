@@ -60,7 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // 2️⃣ Manual login stored session
-    uid ??= await SessionService.getUid();
+    uid ??= await SessionService.getUser();
 
     if (uid == null) return;
 
