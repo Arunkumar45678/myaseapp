@@ -73,37 +73,37 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     mandals = List<String>.from(res.map((e) => e['mandal']));
     villages.clear();
-    village = null;
+    villageCode = null;
     usernameCtrl.clear();
+
     setState(() {});
   }
 
   /* ---------------- LOAD VILLAGES ---------------- */
   Future<void> _loadVillages(String m) async {
-    final res = await supabase.rpc('get_villages', params: {
-      'p_district': district,
-      'p_mandal': m
-    });
+    final res = await supabase.rpc(
+      'get_villages',
+      params: {'p_district': district, 'p_mandal': m},
+    );
 
     villages = List<String>.from(res.map((e) => e['village']));
+    villageCode = null;
     usernameCtrl.clear();
+
     setState(() {});
   }
 
   /* ---------------- GET VILLAGE CODE ---------------- */
   Future<void> _loadVillageCode(String v) async {
-    final res = await supabase.rpc('get_villages', params: {
-      'p_district': district,
-      'p_mandal': mandal
-    });
+    final res = await supabase.rpc(
+      'get_villages',
+      params: {'p_district': district, 'p_mandal': mandal},
+    );
 
-    final selected =
-        res.firstWhere((e) => e['village'] == v, orElse: () => null);
+    final selected = res.firstWhere((e) => e['village'] == v);
 
-    if (selected != null) {
-      villageCode = selected['village_code'];
-      usernameCtrl.text = villageCode ?? "";
-    }
+    villageCode = selected['village_code'];
+    usernameCtrl.text = villageCode ?? "";
 
     setState(() {});
   }
@@ -130,7 +130,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     }
 
     if (villageCode == null) {
-      _show("Village code not found");
+      _show("Village code missing");
       return;
     }
 
@@ -144,7 +144,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         'email': user.email,
         'username': villageCode,
         'password_input': passwordCtrl.text.trim(),
-        'full_name': nameCtrl.text.trim(),   // ✅ fixed param
+        'full_name': nameCtrl.text.trim(),
         'gender': gender,
         'mobile': mobileCtrl.text.trim(),
         'district': district,
@@ -152,21 +152,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         'village': village,
       });
 
+      /// ✅ navigate correctly
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
-        final uid = supabase.auth.currentUser!.id;
-
-MaterialPageRoute(
-  builder: (_) => HomeScreen(uid: uid),
-),
-
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(uid: user.id),
+        ),
       );
     } catch (e) {
-      _show(e.toString()); // show real DB error
+      final msg = e.toString().toLowerCase();
+
+      if (msg.contains('username')) {
+        _show("Village code already used");
+      } else if (msg.contains('mobile')) {
+        _show("Mobile already registered");
+      } else if (msg.contains('email')) {
+        _show("Email already registered");
+      } else {
+        _show("Registration failed");
+      }
     } finally {
-      if (mounted) setState(() => loading = false);
+      setState(() => loading = false);
     }
   }
 
@@ -184,12 +192,13 @@ MaterialPageRoute(
         title: const Text("Mandatory Registration"),
         automaticallyImplyLeading: false,
       ),
+      backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Card(
-            color: Colors.white,
             elevation: 10,
+            color: Colors.white,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -200,14 +209,16 @@ MaterialPageRoute(
                   children: [
 
                     Text("Email: $email"),
+
                     const SizedBox(height: 12),
 
                     TextFormField(
                       controller: nameCtrl,
                       decoration: _input("Full Name"),
                       validator: (v) =>
-                          v!.isEmpty ? "Name required" : null,
+                          v!.isEmpty ? "Enter name" : null,
                     ),
+
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -218,6 +229,7 @@ MaterialPageRoute(
                       validator: (v) =>
                           v!.length != 10 ? "Invalid mobile" : null,
                     ),
+
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -225,11 +237,11 @@ MaterialPageRoute(
                       obscureText: true,
                       decoration: _input("Password"),
                       validator: (v) =>
-                          v!.length < 6 ? "Min 6 characters" : null,
+                          v!.length < 6 ? "Min 6 chars" : null,
                     ),
+
                     const SizedBox(height: 12),
 
-                    /// Gender
                     Row(
                       children: [
                         Expanded(
@@ -257,8 +269,8 @@ MaterialPageRoute(
                       decoration: _input("District"),
                       value: district,
                       items: districts
-                          .map((e) =>
-                              DropdownMenuItem(value: e, child: Text(e)))
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) {
                         district = v;
@@ -267,14 +279,15 @@ MaterialPageRoute(
                       validator: (v) =>
                           v == null ? "Select district" : null,
                     ),
+
                     const SizedBox(height: 12),
 
                     DropdownButtonFormField(
                       decoration: _input("Mandal"),
                       value: mandal,
                       items: mandals
-                          .map((e) =>
-                              DropdownMenuItem(value: e, child: Text(e)))
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) {
                         mandal = v;
@@ -283,14 +296,15 @@ MaterialPageRoute(
                       validator: (v) =>
                           v == null ? "Select mandal" : null,
                     ),
+
                     const SizedBox(height: 12),
 
                     DropdownButtonFormField(
                       decoration: _input("Village"),
                       value: village,
                       items: villages
-                          .map((e) =>
-                              DropdownMenuItem(value: e, child: Text(e)))
+                          .map((e) => DropdownMenuItem(
+                              value: e, child: Text(e)))
                           .toList(),
                       onChanged: (v) {
                         village = v;
@@ -299,6 +313,7 @@ MaterialPageRoute(
                       validator: (v) =>
                           v == null ? "Select village" : null,
                     ),
+
                     const SizedBox(height: 12),
 
                     TextFormField(
@@ -308,12 +323,13 @@ MaterialPageRoute(
                     ),
 
                     const SizedBox(height: 12),
+
                     Text("Solve: $a - $b = ?"),
 
                     TextField(
                       controller: captchaCtrl,
-                      keyboardType: TextInputType.number,
                       decoration: _input("Captcha"),
+                      keyboardType: TextInputType.number,
                     ),
 
                     CheckboxListTile(
@@ -341,7 +357,8 @@ MaterialPageRoute(
                       child: ElevatedButton(
                         onPressed: loading ? null : submit,
                         child: loading
-                            ? const CircularProgressIndicator()
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
                             : const Text("SUBMIT"),
                       ),
                     ),
