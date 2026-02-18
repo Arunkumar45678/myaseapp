@@ -6,8 +6,9 @@ import 'login.dart';
 import 'dashboard.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String? uid;
-  const HomeScreen({super.key, this.uid});
+  final String uid;
+  const HomeScreen({super.key, required this.uid});
+
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -27,8 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUserData() async {
-    String? uid = widget.uid ?? supabase.auth.currentUser?.id;
-    if (uid == null) return;
+  final uid = widget.uid;
 
     final res = await supabase
         .from('user_profiles')
