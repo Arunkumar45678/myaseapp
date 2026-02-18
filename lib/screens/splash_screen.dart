@@ -6,6 +6,8 @@ import 'home.dart';
 import 'registration_screen.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
@@ -24,25 +26,32 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final user = supabase.auth.currentUser;
 
+    /// 🔴 NOT LOGGED IN → LOGIN
     if (user == null) {
-      _go(LoginScreen());
+      _go(const LoginScreen());
       return;
     }
 
+    /// 🔴 CHECK PROFILE EXISTS
     final profile = await supabase
         .from('user_profiles')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
 
+    /// 🔴 FIRST LOGIN → REGISTRATION
     if (profile == null) {
-      _go(RegistrationScreen());
-    } else {
-      _go(HomeScreen());
+      _go(const RegistrationScreen());
+    } 
+    
+    /// 🔴 REGISTERED → HOME (PASS UID)
+    else {
+      _go(HomeScreen(uid: user.id));
     }
   }
 
   void _go(Widget page) {
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => page),
