@@ -156,7 +156,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        final uid = supabase.auth.currentUser!.id;
+
+MaterialPageRoute(
+  builder: (_) => HomeScreen(uid: uid),
+),
+
       );
     } catch (e) {
       _show(e.toString()); // show real DB error
