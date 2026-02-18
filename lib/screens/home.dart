@@ -7,8 +7,8 @@ import 'dashboard.dart';
 
 class HomeScreen extends StatefulWidget {
   final String uid;
-  const HomeScreen({super.key, required this.uid});
 
+  const HomeScreen({super.key, required this.uid});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -28,19 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUserData() async {
-  final uid = widget.uid;
+    try {
+      final res = await supabase
+          .from('user_profiles')
+          .select('full_name, username')
+          .eq('id', widget.uid)
+          .maybeSingle();
 
-    final res = await supabase
-        .from('user_profiles')
-        .select('full_name, username')
-        .eq('id', uid)
-        .maybeSingle();
-
-    if (res != null) {
-      setState(() {
-        userName = res['full_name'] ?? "";
-        username = res['username'] ?? "";
-      });
+      if (res != null) {
+        setState(() {
+          userName = res['full_name'] ?? "";
+          username = res['username'] ?? "";
+        });
+      }
+    } catch (e) {
+      print("LOAD USER ERROR: $e");
     }
   }
 
@@ -59,17 +61,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _getBody() {
-    switch (index) {
-      case 0:
-        return const DashboardScreen();
-      case 1:
-        return const Center(child: Text("Info Page"));
-      case 2:
-        return const Center(child: Text("Profile Page"));
-      default:
-        return const DashboardScreen();
-    }
+  Widget _body() {
+    if (index == 0) return DashboardScreen(uid: widget.uid);
+    if (index == 1) return const Center(child: Text("Info Page"));
+    return const Center(child: Text("Profile Page"));
   }
 
   @override
@@ -78,30 +73,44 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text("ASE Dashboard"),
         actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          )
         ],
       ),
+
       drawer: Drawer(
         child: Column(
           children: [
+
             UserAccountsDrawerHeader(
-              accountName:
-                  Text(userName.isEmpty ? "Loading..." : userName),
+              accountName: Text(
+                  userName.isEmpty ? "Loading..." : userName),
               accountEmail: Text(username),
-              currentAccountPicture:
-                  const CircleAvatar(child: Icon(Icons.person)),
+              currentAccountPicture: const CircleAvatar(
+                child: Icon(Icons.person),
+              ),
             ),
+
             ListTile(
-                title: const Text("Home"),
-                onTap: () {
-                  setState(() => index = 0);
-                  Navigator.pop(context);
-                }),
-            ListTile(title: const Text("Logout"), onTap: _logout),
+              title: const Text("Home"),
+              onTap: () {
+                setState(() => index = 0);
+                Navigator.pop(context);
+              },
+            ),
+
+            ListTile(
+              title: const Text("Logout"),
+              onTap: _logout,
+            ),
           ],
         ),
       ),
-      body: _getBody(),
+
+      body: _body(),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
