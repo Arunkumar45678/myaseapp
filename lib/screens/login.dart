@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home.dart';
 import 'registration_screen.dart';
-import '../services/session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,7 +14,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   final supabase = Supabase.instance.client;
 
   final usernameCtrl = TextEditingController();
@@ -28,10 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _generateCaptcha();
+    _genCaptcha();
   }
 
-  void _generateCaptcha() {
+  void _genCaptcha() {
     final r = Random();
     a = r.nextInt(9) + 1;
     b = r.nextInt(a);
@@ -46,13 +44,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
 
-  /* ---------------- GOOGLE LOGIN ---------------- */
+  /* ================= GOOGLE LOGIN ================= */
 
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
 
-      final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
+      final googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
 
       final auth = await googleUser.authentication;
@@ -75,32 +73,27 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(
           builder: (_) =>
-              profile == null ? const RegistrationScreen() : const HomeScreen(),
+              profile == null ? const RegistrationScreen() : HomeScreen(uid: user.id),
         ),
       );
-
-    } catch (_) {
+    } catch (e) {
       _show("Google login failed");
     } finally {
       setState(() => loading = false);
     }
   }
 
-  /* ---------------- MANUAL LOGIN ---------------- */
+  /* ================= MANUAL LOGIN ================= */
 
   Future<void> manualLogin() async {
-
-    final uname = usernameCtrl.text.trim();
-    final pass = passwordCtrl.text.trim();
-
-    if (uname.isEmpty || pass.isEmpty) {
-      _show("Enter username & password");
+    if (usernameCtrl.text.isEmpty || passwordCtrl.text.isEmpty) {
+      _show("Enter username and password");
       return;
     }
 
     if (int.tryParse(captchaCtrl.text) != (a - b)) {
       _show("Captcha incorrect");
-      _generateCaptcha();
+      _genCaptcha();
       setState(() {});
       return;
     }
@@ -108,12 +101,11 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
 
     try {
-
       final uid = await supabase.rpc(
         'login_user',
         params: {
-          'username_input': uname,
-          'password_input': pass,
+          'username_input': usernameCtrl.text.trim(),
+          'password_input': passwordCtrl.text.trim(),
         },
       );
 
@@ -122,15 +114,11 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      /// Save UID locally for manual login session
-      await SessionService.saveUser(uid.toString());
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => HomeScreen(uid: uid.toString())),
       );
-
-    } catch (_) {
+    } catch (e) {
       _show("Login failed");
     } finally {
       setState(() => loading = false);
@@ -142,11 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  /* ---------------- UI ---------------- */
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: Center(
@@ -155,25 +140,18 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Card(
             color: Colors.white,
             elevation: 10,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-
                   Image.asset("assets/images/logo.png", height: 70),
-
                   const SizedBox(height: 12),
-
-                  const Text(
-                    "Welcome to ASE",
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                  ),
-
+                  const Text("Welcome to ASE",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 6),
                   const Text("Sign in to continue"),
 
@@ -191,14 +169,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Divider(),
                   const Text("OR login with Username"),
                   const Divider(),
-
                   const SizedBox(height: 10),
 
                   TextField(
                     controller: usernameCtrl,
                     decoration: _input("Username"),
                   ),
-
                   const SizedBox(height: 12),
 
                   TextField(
@@ -206,13 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: _input("Password"),
                   ),
-
                   const SizedBox(height: 12),
 
-                  Text(
-                    "Solve: $a - $b = ?",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  Text("Solve: $a - $b = ?",
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
 
                   const SizedBox(height: 6),
 
