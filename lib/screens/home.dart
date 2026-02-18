@@ -4,17 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'login.dart';
 import 'dashboard.dart';
-import '../services/session_service.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String? uid;
+  const HomeScreen({super.key, this.uid});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final supabase = Supabase.instance.client;
 
   int index = 0;
@@ -27,19 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserData();
   }
 
-  /* ---------------- LOAD USER DATA ---------------- */
-
   Future<void> _loadUserData() async {
-
-    final authUser = supabase.auth.currentUser;
-    String? uid;
-
-    if (authUser != null) {
-      uid = authUser.id;
-    } else {
-      uid = await SessionService.getUser();
-    }
-
+    String? uid = widget.uid ?? supabase.auth.currentUser?.id;
     if (uid == null) return;
 
     final res = await supabase
@@ -56,25 +44,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /* ---------------- LOGOUT ---------------- */
-
   Future<void> _logout() async {
-
-    try { await GoogleSignIn().signOut(); } catch (_) {}
+    try {
+      await GoogleSignIn().signOut();
+    } catch (_) {}
 
     await supabase.auth.signOut();
-    await SessionService.clear();
 
     if (!mounted) return;
-
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
     );
   }
-
-  /* ---------------- BODY ---------------- */
 
   Widget _getBody() {
     switch (index) {
@@ -89,65 +72,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /* ---------------- UI ---------------- */
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("ASE Dashboard"),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
         ],
       ),
-
       drawer: Drawer(
         child: Column(
           children: [
-
             UserAccountsDrawerHeader(
-              accountName: Text(
-                userName.isEmpty ? "Loading..." : userName,
-              ),
+              accountName:
+                  Text(userName.isEmpty ? "Loading..." : userName),
               accountEmail: Text(username),
-              currentAccountPicture: const CircleAvatar(
-                child: Icon(Icons.person, size: 30),
-              ),
+              currentAccountPicture:
+                  const CircleAvatar(child: Icon(Icons.person)),
             ),
-
             ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text("Home"),
-              onTap: () {
-                setState(() => index = 0);
-                Navigator.pop(context);
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text("Profile"),
-              onTap: () {
-                setState(() => index = 2);
-                Navigator.pop(context);
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text("Logout"),
-              onTap: _logout,
-            ),
+                title: const Text("Home"),
+                onTap: () {
+                  setState(() => index = 0);
+                  Navigator.pop(context);
+                }),
+            ListTile(title: const Text("Logout"), onTap: _logout),
           ],
         ),
       ),
-
       body: _getBody(),
-
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => setState(() => index = i),
