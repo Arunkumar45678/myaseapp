@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'home.dart';
 import 'registration_screen.dart';
+import '../services/session_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,12 +46,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
   /* ================= GOOGLE LOGIN ================= */
-
   Future<void> googleLogin() async {
     try {
       setState(() => loading = true);
 
-      final googleUser = await GoogleSignIn().signIn();
+      final googleUser =
+          await GoogleSignIn(scopes: ['email']).signIn();
       if (googleUser == null) return;
 
       final auth = await googleUser.authentication;
@@ -69,11 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
           .eq('id', user.id)
           .maybeSingle();
 
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              profile == null ? const RegistrationScreen() : HomeScreen(uid: user.id),
+          builder: (_) => profile == null
+              ? const RegistrationScreen()
+              : HomeScreen(uid: user.id),
         ),
       );
     } catch (e) {
@@ -84,10 +88,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   /* ================= MANUAL LOGIN ================= */
-
   Future<void> manualLogin() async {
     if (usernameCtrl.text.isEmpty || passwordCtrl.text.isEmpty) {
-      _show("Enter username and password");
+      _show("Enter username & password");
       return;
     }
 
@@ -109,16 +112,26 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
 
+      print("LOGIN RPC UID = $uid"); // debug
+
       if (uid == null) {
         _show("Invalid username or password");
         return;
       }
 
+      /// 🔥 SAVE UID LOCALLY (CRITICAL FIX)
+      await SessionService.saveUser(uid.toString());
+
+      if (!mounted) return;
+
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => HomeScreen(uid: uid.toString())),
+        MaterialPageRoute(
+          builder: (_) => HomeScreen(uid: uid.toString()),
+        ),
       );
     } catch (e) {
+      print("LOGIN ERROR = $e");
       _show("Login failed");
     } finally {
       setState(() => loading = false);
@@ -138,24 +151,18 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Card(
-            color: Colors.white,
             elevation: 10,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset("assets/images/logo.png", height: 70),
-                  const SizedBox(height: 12),
-                  const Text("Welcome to ASE",
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 6),
-                  const Text("Sign in to continue"),
 
-                  const SizedBox(height: 16),
+                  Image.asset("assets/images/logo.png", height: 70),
+
+                  const SizedBox(height: 10),
 
                   SizedBox(
                     width: double.infinity,
@@ -165,16 +172,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const Divider(height: 30),
+                  const Text("OR login manually"),
                   const Divider(),
-                  const Text("OR login with Username"),
-                  const Divider(),
-                  const SizedBox(height: 10),
 
                   TextField(
                     controller: usernameCtrl,
                     decoration: _input("Username"),
                   ),
+
                   const SizedBox(height: 12),
 
                   TextField(
@@ -182,17 +188,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: _input("Password"),
                   ),
+
                   const SizedBox(height: 12),
 
-                  Text("Solve: $a - $b = ?",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-
-                  const SizedBox(height: 6),
+                  Text("Solve: $a - $b = ?"),
 
                   TextField(
                     controller: captchaCtrl,
-                    decoration: _input("Captcha"),
                     keyboardType: TextInputType.number,
+                    decoration: _input("Captcha"),
                   ),
 
                   const SizedBox(height: 16),
@@ -202,7 +206,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: loading ? null : manualLogin,
                       child: loading
-                          ? const CircularProgressIndicator(color: Colors.white)
+                          ? const CircularProgressIndicator(
+                              color: Colors.white)
                           : const Text("LOGIN"),
                     ),
                   ),
