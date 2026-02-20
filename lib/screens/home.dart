@@ -54,12 +54,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
 
             const DrawerHeader(
-  decoration: BoxDecoration(color: Color(0xFF0A1F44)),
-  child: Text(
-    "ASE Menu",
-    style: TextStyle(color: Colors.white, fontSize: 22),
-  ),
-)
+              child: Text("ASE Menu",style:TextStyle(fontSize:22)),
+            ),
 
             ListTile(
               title: const Text("Home"),
