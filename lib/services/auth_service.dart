@@ -3,21 +3,17 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   static final _supabase = Supabase.instance.client;
 
-  static Future<Map<String, dynamic>> login(
-      String username, String password) async {
-    final res = await _supabase.rpc(
+  /// Manual login → returns UID or null
+  static Future<String?> login(String username, String password) async {
+    final uid = await _supabase.rpc(
       'login_user',
       params: {
-        'p_username': username,
-        'p_password': password,
+        'username_input': username,
+        'password_input': password,
       },
     );
 
-    // RPC returns a list of rows
-    if (res is List && res.isNotEmpty) {
-      return Map<String, dynamic>.from(res.first);
-    }
-
-    throw Exception("Invalid login response");
+    if (uid == null) return null;
+    return uid.toString();
   }
 }
