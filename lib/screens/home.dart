@@ -15,39 +15,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
-  final supabase = Supabase.instance.client;
-
   int index = 0;
-  String name = "";
-  String username = "";
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final res = await supabase
-        .from('user_profiles')
-        .select('full_name,username')
-        .eq('id', widget.uid)
-        .maybeSingle();
-
-    if (res != null) {
-      setState(() {
-        name = res['full_name'] ?? "";
-        username = res['username'] ?? "";
-      });
-    }
-  }
 
   Future<void> _logout() async {
     try { await GoogleSignIn().signOut(); } catch (_) {}
-    await supabase.auth.signOut();
+    await Supabase.instance.client.auth.signOut();
 
-    if (!mounted) return;
-
+    if(!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -55,73 +29,68 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _body() {
-    switch (index) {
-      case 0: return const DashboardScreen();
-      case 1: return const Center(child: Text("Info Page"));
-      case 2: return const Center(child: Text("Profile Page"));
-      default: return const DashboardScreen();
+  Widget _body(){
+    switch(index){
+      case 0: return DashboardScreen(uid: widget.uid);
+      case 1: return const Center(child:Text("Info Page"));
+      case 2: return const Center(child:Text("Profile Page"));
+      default: return DashboardScreen(uid: widget.uid);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
     return Scaffold(
 
       appBar: AppBar(
         title: const Text("ASE Dashboard"),
-        actions: [
-          IconButton(icon: const Icon(Icons.logout), onPressed: _logout)
+        actions:[
+          IconButton(icon:const Icon(Icons.logout),onPressed:_logout)
         ],
       ),
 
       drawer: Drawer(
-        child: Column(
+        child: ListView(
           children: [
 
-            UserAccountsDrawerHeader(
-              accountName: Text(name.isEmpty ? "Loading..." : name),
-              accountEmail: Text(username),
-              currentAccountPicture:
-              const CircleAvatar(child: Icon(Icons.person, size: 30)),
+            const DrawerHeader(
+              child: Text("ASE Menu",style:TextStyle(fontSize:22)),
             ),
 
             ListTile(
-              leading: const Icon(Icons.home),
               title: const Text("Home"),
-              onTap: () {
-                setState(() => index = 0);
+              onTap: (){
+                setState(()=>index=0);
                 Navigator.pop(context);
               },
             ),
 
             ListTile(
-              leading: const Icon(Icons.person),
               title: const Text("Profile"),
-              onTap: () {
-                setState(() => index = 2);
+              onTap: (){
+                setState(()=>index=2);
                 Navigator.pop(context);
               },
             ),
 
             ListTile(
-              leading: const Icon(Icons.logout),
               title: const Text("Logout"),
               onTap: _logout,
             ),
+
           ],
         ),
       ),
 
-      body: _body(),
+      body:_body(),
 
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: index,
-        onTap: (i) => setState(() => index = i),
+        currentIndex:index,
+        onTap:(i)=>setState(()=>index=i),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.info), label: "Info"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          BottomNavigationBarItem(icon:Icon(Icons.home),label:"Home"),
+          BottomNavigationBarItem(icon:Icon(Icons.info),label:"Info"),
+          BottomNavigationBarItem(icon:Icon(Icons.person),label:"Profile"),
         ],
       ),
     );
