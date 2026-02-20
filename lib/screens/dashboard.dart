@@ -1,58 +1,99 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/dashboard_card.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String uid;
+  const DashboardScreen({super.key, required this.uid});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  State<DashboardScreen> createState()=>_DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>{
 
-  final PageController _controller = PageController();
-  int page = 0;
-  Timer? timer;
+  final supabase=Supabase.instance.client;
+
+  final PageController _pageController=PageController();
+  int currentPage=0;
+  Timer? _timer;
+
+  String name="";
+  String username="";
 
   @override
-  void initState() {
+  void initState(){
     super.initState();
+    _loadUser();
+    _startAutoSlide();
+  }
 
-    timer = Timer.periodic(const Duration(seconds: 3), (t) {
-      if (_controller.hasClients) {
-        page = (page + 1) % 3;
-        _controller.animateToPage(
-          page,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
+  void _startAutoSlide(){
+    _timer=Timer.periodic(const Duration(seconds:3),(timer){
+      if(_pageController.hasClients){
+        currentPage=(currentPage+1)%3;
+        _pageController.animateToPage(
+          currentPage,
+          duration:const Duration(milliseconds:500),
+          curve:Curves.easeInOut,
         );
       }
     });
   }
 
+  Future<void> _loadUser() async{
+
+    final res=await supabase
+        .from('user_profiles')
+        .select('full_name,username')
+        .eq('id', widget.uid)
+        .maybeSingle();
+
+    if(res!=null){
+      setState((){
+        name=res['full_name']??"";
+        username=res['username']??"";
+      });
+    }
+  }
+
   @override
-  void dispose() {
-    timer?.cancel();
-    _controller.dispose();
+  void dispose(){
+    _timer?.cancel();
+    _pageController.dispose();
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-
+  Widget build(BuildContext context){
     return SingleChildScrollView(
-      child: Column(
-        children: [
+      child:Column(
+        crossAxisAlignment:CrossAxisAlignment.start,
+        children:[
 
-          const SizedBox(height: 16),
+          Padding(
+            padding:const EdgeInsets.all(16),
+            child:Column(
+              crossAxisAlignment:CrossAxisAlignment.start,
+              children:[
+                Text(
+                  name.isEmpty?"Loading...":name,
+                  style:const TextStyle(
+                      fontSize:22,fontWeight:FontWeight.bold),
+                ),
+                const SizedBox(height:4),
+                Text(username,style:const TextStyle(color:Colors.grey)),
+              ],
+            ),
+          ),
 
           SizedBox(
-            height: 180,
-            child: PageView(
-              controller: _controller,
-              onPageChanged: (i) => setState(() => page = i),
-              children: [
+            height:180,
+            child:PageView(
+              controller:_pageController,
+              onPageChanged:(i)=>setState(()=>currentPage=i),
+              children:[
                 _img("assets/images/slide1.jpg"),
                 _img("assets/images/slide2.jpg"),
                 _img("assets/images/slide3.jpg"),
@@ -60,55 +101,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height:10),
 
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(3, (i) {
+            mainAxisAlignment:MainAxisAlignment.center,
+            children:List.generate(3,(i){
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: page == i ? 12 : 8,
-                height: page == i ? 12 : 8,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: page == i ? Colors.blue : Colors.grey,
+                margin:const EdgeInsets.symmetric(horizontal:4),
+                width:currentPage==i?12:8,
+                height:currentPage==i?12:8,
+                decoration:BoxDecoration(
+                  shape:BoxShape.circle,
+                  color:currentPage==i?Colors.blue:Colors.grey,
                 ),
               );
             }),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height:20),
 
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              children: List.generate(8, (i) {
+            padding:const EdgeInsets.symmetric(horizontal:16),
+            child:GridView.count(
+              shrinkWrap:true,
+              physics:const NeverScrollableScrollPhysics(),
+              crossAxisCount:2,
+              crossAxisSpacing:16,
+              mainAxisSpacing:16,
+              children:List.generate(8,(i){
                 return DashboardCard(
-                  icon: Icons.widgets,
-                  title: "Card ${i + 1}",
-                  subtitle: "Sample",
-                  onTap: () {},   // ✅ FIXED
+                  icon:Icons.widgets,
+                  title:"Card ${i+1}",
+                  subtitle:"Sample",
+                  onTap:(){},
                 );
               }),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height:20),
         ],
       ),
     );
   }
 
-  Widget _img(String p) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Image.asset(p, fit: BoxFit.cover),
-    ),
-  );
+  Widget _img(String p){
+    return Padding(
+      padding:const EdgeInsets.symmetric(horizontal:16),
+      child:ClipRRect(
+        borderRadius:BorderRadius.circular(16),
+        child:Image.asset(p,fit:BoxFit.cover),
+      ),
+    );
+  }
 }
